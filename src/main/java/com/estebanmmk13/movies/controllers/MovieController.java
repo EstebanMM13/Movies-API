@@ -4,88 +4,86 @@
  */
 package com.estebanmmk13.movies.controllers;
 
+import com.estebanmmk13.movies.error.MovieNotFoundException;
 import com.estebanmmk13.movies.models.Movie;
-import com.estebanmmk13.movies.repositories.MovieRepository;
-import java.util.List;
-import java.util.Optional;
+import com.estebanmmk13.movies.services.MovieServiceImpl;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
- *
  * @author esteb
  */
 
 @RestController
 @RequestMapping("api/movies")
 public class MovieController {
-    
+
     @Autowired
-    private MovieRepository movieRespository;
-    
+    private MovieServiceImpl movieServiceImpl;
+
     @CrossOrigin
     @GetMapping
-    public List<Movie> getAllMovies()
-    {
-        return movieRespository.findAll();
+    public List<Movie> getAllMovies() {
+        return movieServiceImpl.getAllMovies();
     }
 
     @CrossOrigin
     @GetMapping("/{id}")
-    public ResponseEntity<Movie> getMovieById(@PathVariable Long id){
-        Optional<Movie> movie = movieRespository.findById(id);
-        return movie.map(ResponseEntity::ok).orElseGet( () -> ResponseEntity.notFound().build());
+    public ResponseEntity<?> getMovieById(@PathVariable Long id) throws MovieNotFoundException {
+        return movieServiceImpl.getMovieById(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @CrossOrigin
+    @GetMapping("/title/{title}")
+    public ResponseEntity<Movie> getMovieByNameWithJPQL(@PathVariable String title){
+        return movieServiceImpl.getMovieByNameWithJPQL(title)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @CrossOrigin
+    @GetMapping("/findByTitle/{title}")
+    public ResponseEntity<Movie> findByTitle(@PathVariable String title){
+        return movieServiceImpl.findByTitleIgnoreCase(title)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @CrossOrigin
     @PostMapping
-    public ResponseEntity<Movie> createMovie(@RequestBody Movie movie){
-        Movie savedMovie = movieRespository.save(movie);
+    public ResponseEntity<Movie> createMovie(@Valid @RequestBody Movie movie) {
+        Movie savedMovie = movieServiceImpl.createMovie(movie);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedMovie);
     }
 
     @CrossOrigin
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteMovie(@PathVariable Long id){
-        if(!movieRespository.existsById(id)){
-            return ResponseEntity.notFound().build();
-        }
-        movieRespository.deleteById(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<Void> deleteMovie(@PathVariable Long id) {
+        boolean deleted = movieServiceImpl.deleteMovie(id);
+        return deleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }
 
     @CrossOrigin
-    @PutMapping("/{id}")
-    public ResponseEntity<Movie> updateMovie(@PathVariable Long id,@RequestBody Movie movie){
-        if(!movieRespository.existsById(id)){
-            return ResponseEntity.notFound().build();
-        }
-        movie.setId(id);
-        movieRespository.save(movie);
-        return ResponseEntity.ok().body(movie);
+    @PatchMapping("/{id}")
+    public ResponseEntity<Movie> updateMovie(@PathVariable Long id, @RequestBody Movie movie) {
+        return movieServiceImpl.updateMovie(id, movie)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @CrossOrigin
     @PutMapping("/{id}/{rating}")
-    public ResponseEntity<Movie> voteMovie(@PathVariable Long id,@PathVariable Double rating){
-        if(!movieRespository.existsById(id)){
-            return ResponseEntity.notFound().build();
-        }
-        Movie movie = movieRespository.findById(id).get();
-
-        double newRating = ( (movie.getVotes() * movie.getRating()) + rating) / (movie.getVotes() + 1);
-
-        movie.setVotes(movie.getVotes() + 1);
-        movie.setRating(newRating);
-
-        Movie savedMovie = movieRespository.save(movie);
-        return ResponseEntity.ok().body(savedMovie);
-
-
-
+    public ResponseEntity<Movie> voteMovie(@PathVariable Long id, @PathVariable Double rating) {
+        return movieServiceImpl.voteMovie(id, rating)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
-
 
 }

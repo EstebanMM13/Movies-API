@@ -6,6 +6,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+import org.hibernate.validator.constraints.Length;
 
 /**
  *
@@ -19,7 +21,10 @@ public class Movie {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String title, description;
+    @NotBlank(message = "Please add the title of movie")
+    private String title;
+    @Length(min = 1, max = 200)
+    private String description;
     private int year, votes;
     private double rating;
 
