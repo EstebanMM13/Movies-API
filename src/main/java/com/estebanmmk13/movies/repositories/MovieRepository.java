@@ -17,11 +17,5 @@ import java.util.Optional;
  */
 public interface MovieRepository extends JpaRepository<Movie,Long>{
 
-    @Query("SELECT m FROM Movie m WHERE m.title = :title")
-    Optional<Movie> getMovieByNameWithJPQL(@Param("title") String title);
-
     Optional<Movie> findByTitleIgnoreCase(String title);
-
-
-
 }

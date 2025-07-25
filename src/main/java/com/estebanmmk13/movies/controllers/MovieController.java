@@ -6,6 +6,7 @@ package com.estebanmmk13.movies.controllers;
 
 import com.estebanmmk13.movies.error.MovieNotFoundException;
 import com.estebanmmk13.movies.models.Movie;
+import com.estebanmmk13.movies.services.MovieService;
 import com.estebanmmk13.movies.services.MovieServiceImpl;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,26 +25,18 @@ import java.util.List;
 public class MovieController {
 
     @Autowired
-    private MovieServiceImpl movieServiceImpl;
+    private MovieService movieService;
 
     @CrossOrigin
     @GetMapping
     public List<Movie> getAllMovies() {
-        return movieServiceImpl.getAllMovies();
+        return movieService.getAllMovies();
     }
 
     @CrossOrigin
     @GetMapping("/{id}")
     public ResponseEntity<?> getMovieById(@PathVariable Long id) throws MovieNotFoundException {
-        return movieServiceImpl.getMovieById(id)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
-    @CrossOrigin
-    @GetMapping("/title/{title}")
-    public ResponseEntity<Movie> getMovieByNameWithJPQL(@PathVariable String title){
-        return movieServiceImpl.getMovieByNameWithJPQL(title)
+        return movieService.getMovieById(id)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -51,7 +44,7 @@ public class MovieController {
     @CrossOrigin
     @GetMapping("/findByTitle/{title}")
     public ResponseEntity<Movie> findByTitle(@PathVariable String title){
-        return movieServiceImpl.findByTitleIgnoreCase(title)
+        return movieService.findByTitleIgnoreCase(title)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -59,21 +52,21 @@ public class MovieController {
     @CrossOrigin
     @PostMapping
     public ResponseEntity<Movie> createMovie(@Valid @RequestBody Movie movie) {
-        Movie savedMovie = movieServiceImpl.createMovie(movie);
+        Movie savedMovie = movieService.createMovie(movie);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedMovie);
     }
 
     @CrossOrigin
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteMovie(@PathVariable Long id) {
-        boolean deleted = movieServiceImpl.deleteMovie(id);
+        boolean deleted = movieService.deleteMovie(id);
         return deleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }
 
     @CrossOrigin
     @PatchMapping("/{id}")
     public ResponseEntity<Movie> updateMovie(@PathVariable Long id, @RequestBody Movie movie) {
-        return movieServiceImpl.updateMovie(id, movie)
+        return movieService.updateMovie(id, movie)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -81,7 +74,7 @@ public class MovieController {
     @CrossOrigin
     @PutMapping("/{id}/{rating}")
     public ResponseEntity<Movie> voteMovie(@PathVariable Long id, @PathVariable Double rating) {
-        return movieServiceImpl.voteMovie(id, rating)
+        return movieService.voteMovie(id, rating)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }

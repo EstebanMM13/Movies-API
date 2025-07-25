@@ -13,7 +13,6 @@ public interface MovieService {
     public Optional<Movie> updateMovie(Long id, Movie movie);
     public boolean deleteMovie(Long id);
     public Optional<Movie> voteMovie(Long id, Double rating);
-    Optional <Movie> getMovieByNameWithJPQL(String title);
     Optional <Movie> findByTitleIgnoreCase(String title);
 
 }

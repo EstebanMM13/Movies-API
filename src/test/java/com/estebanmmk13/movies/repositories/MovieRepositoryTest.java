@@ -38,16 +38,68 @@ class MovieRepositoryTest {
     }
 
     @Test
+    public void shouldFindByIdSuccessfully() {
+        Movie movie = Movie.builder()
+                .title("Peli ID")
+                .description("Desc")
+                .movieYear(2005)
+                .votes(1)
+                .rating(4.5)
+                .build();
+
+        Movie saved = testEntityManager.persist(movie);
+
+        Optional<Movie> found = movieRepository.findById(saved.getId());
+
+        assertTrue(found.isPresent());
+        assertEquals("Peli ID", found.get().getTitle());
+    }
+
+    @Test
     public void findMovieByTitleIgnoreCaseFound(){
-        Optional<Movie> optionalMovie = movieRepository.findByTitleIgnoreCase("Peli jiji");
+        Optional<Movie> optionalMovie = movieRepository.findByTitleIgnoreCase("Peli JIji");
         assertEquals("Peli jiji", optionalMovie.get().getTitle());
     }
 
     @Test
     public void findMovieByTitleIgnoreCaseNotFound(){
         Optional<Movie> optionalMovie = movieRepository.findByTitleIgnoreCase("Peliafgsdf");
-        assertEquals(Optional.empty(),optionalMovie);
+        assertTrue(optionalMovie.isEmpty());
     }
+
+    @Test
+    public void shouldSaveMovieSuccessfully() {
+        Movie newMovie = Movie.builder()
+                .title("Nueva peli")
+                .description("Otra descripcion")
+                .movieYear(2022)
+                .votes(0)
+                .rating(0)
+                .build();
+
+        Movie savedMovie = movieRepository.save(newMovie);
+
+        assertNotNull(savedMovie.getId()); // El ID debe generarse
+        assertEquals("Nueva peli", savedMovie.getTitle());
+    }
+
+    @Test
+    public void shouldDeleteMovieSuccessfully() {
+        Movie movie = Movie.builder()
+                .title("Borrar esta")
+                .description("Delete desc")
+                .movieYear(2010)
+                .votes(0)
+                .rating(0)
+                .build();
+
+        Movie saved = testEntityManager.persist(movie);
+        movieRepository.deleteById(saved.getId());
+
+        Optional<Movie> deleted = movieRepository.findById(saved.getId());
+        assertTrue(deleted.isEmpty());
+    }
+
 
 
 }

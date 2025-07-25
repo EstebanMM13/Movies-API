@@ -60,12 +60,6 @@ public class MovieServiceImpl implements MovieService{
         return Optional.of(movieRepository.save(movie));
     }
 
-
-    @Override
-    public Optional<Movie> getMovieByNameWithJPQL(String title) {
-        return movieRepository.getMovieByNameWithJPQL(title);
-    }
-
     @Override
     public Optional<Movie> findByTitleIgnoreCase(String title) {
         return movieRepository.findByTitleIgnoreCase(title);
