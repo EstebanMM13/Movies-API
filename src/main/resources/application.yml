@@ -3,7 +3,7 @@ server:
 
 spring:
   profiles:
-    active: qa
+    active: dev
 ---
 
 spring:
@@ -15,7 +15,7 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     password: 1234
-    url: jdbc:mysql://127.0.0.1:3306/movies
+    url: jdbc:mysql://127.0.0.1:3306/movies_dev
     username: root
   jpa:
     database: MYSQL
@@ -37,6 +37,27 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     password: 1234
     url: jdbc:mysql://127.0.0.1:3306/movies_qa
+    username: root
+  jpa:
+    database: MYSQL
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+    show-sql: true
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  application:
+    name: movies
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    password: 1234
+    url: jdbc:mysql://127.0.0.1:3306/movies_prod
     username: root
   jpa:
     database: MYSQL
