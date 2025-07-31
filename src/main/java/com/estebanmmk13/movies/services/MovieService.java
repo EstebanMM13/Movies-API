@@ -7,12 +7,18 @@ import java.util.List;
 import java.util.Optional;
 
 public interface MovieService {
-    public List<Movie> getAllMovies();
-    public Optional<Movie> getMovieById(Long id) throws MovieNotFoundException;
-    public Movie createMovie(Movie movie);
-    public Optional<Movie> updateMovie(Long id, Movie movie);
-    public boolean deleteMovie(Long id);
-    public Optional<Movie> voteMovie(Long id, Double rating);
-    Optional <Movie> findByTitleIgnoreCase(String title);
+    List<Movie> getAllMovies();
+
+    Optional<Movie> getMovieById(Long id) throws MovieNotFoundException;
+
+    Movie createMovie(Movie movie);
+
+    Optional<Movie> updateMovie(Long id, Movie movie);
+
+    boolean deleteMovie(Long id);
+
+    Optional<Movie> voteMovie(Long id, Double rating);
+
+    Optional<Movie> findByTitleIgnoreCase(String title);
 
 }

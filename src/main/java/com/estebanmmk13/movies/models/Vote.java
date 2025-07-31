@@ -6,24 +6,27 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Entity
-@Table(name = "users")
+@Table(name = "votes")
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @Builder
-public class User {
+public class Vote {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
-    private String username;
+    @ManyToOne
+    private Movie movie;
 
-    @Column(nullable = false, unique = true)
-    private String email;
+    @ManyToOne
+    private User user;
 
-    @Column(nullable = false)
-    private String password;
+    private int rating;
+
+    private LocalDateTime votedAt;
 }
