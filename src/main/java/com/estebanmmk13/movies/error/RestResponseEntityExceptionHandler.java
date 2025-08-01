@@ -1,6 +1,7 @@
 package com.estebanmmk13.movies.error;
 
 import com.estebanmmk13.movies.error.dto.ErrorMessage;
+import com.estebanmmk13.movies.error.notFound.*;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -16,22 +17,33 @@ import java.util.HashMap;
 import java.util.Map;
 
 @ControllerAdvice
-public class RestResponseEntityExceptonHandler extends ResponseEntityExceptionHandler {
+public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionHandler {
 
-    @ExceptionHandler(MovieNotFoundException.class)
+    @ExceptionHandler({
+            MovieNotFoundException.class,
+            UserNotFoundException.class,
+            GenreNotFoundException.class,
+            ReviewNotFoundException.class,
+            VoteNotFoundException.class
+    })
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ResponseEntity<ErrorMessage> movieNotFoundException(MovieNotFoundException exception){
-        ErrorMessage errorMessage = new ErrorMessage(HttpStatus.NOT_FOUND,exception.getMessage());
+    public ResponseEntity<ErrorMessage> handleNotFoundExceptions(RuntimeException exception) {
+        ErrorMessage errorMessage = new ErrorMessage(HttpStatus.NOT_FOUND, exception.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorMessage);
     }
 
     @Override
-    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(
+            MethodArgumentNotValidException ex,
+            HttpHeaders headers,
+            HttpStatusCode status,
+            WebRequest request) {
+
         Map<String, Object> errors = new HashMap<>();
         ex.getBindingResult().getFieldErrors().forEach(error -> {
-
             errors.put(error.getField(), error.getDefaultMessage());
         });
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
     }
 }
+

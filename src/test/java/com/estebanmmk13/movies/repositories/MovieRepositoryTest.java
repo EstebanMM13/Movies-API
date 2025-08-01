@@ -57,13 +57,13 @@ class MovieRepositoryTest {
 
     @Test
     public void findMovieByTitleIgnoreCaseFound(){
-        Optional<Movie> optionalMovie = movieRepository.findByTitleIgnoreCase("Peli JIji");
+        Optional<Movie> optionalMovie = movieRepository.findMovieByTitleIgnoreCase("Peli JIji");
         assertEquals("Peli jiji", optionalMovie.get().getTitle());
     }
 
     @Test
     public void findMovieByTitleIgnoreCaseNotFound(){
-        Optional<Movie> optionalMovie = movieRepository.findByTitleIgnoreCase("Peliafgsdf");
+        Optional<Movie> optionalMovie = movieRepository.findMovieByTitleIgnoreCase("Peliafgsdf");
         assertTrue(optionalMovie.isEmpty());
     }
 
