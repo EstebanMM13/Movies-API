@@ -76,7 +76,7 @@ class MovieControllerTest {
     void findByTitle() throws Exception {
         Mockito.when(movieService.findMovieByTitleIgnoreCase("peli jiji")).thenReturn(movie);
 
-        mockMvc.perform(get("/api/movies/findByTitle/peli jiji"))
+        mockMvc.perform(get("/api/movies/title/peli jiji"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("Peli jiji"));
     }
@@ -85,7 +85,7 @@ class MovieControllerTest {
     void findByTitleNotFound() throws Exception {
         Mockito.when(movieService.findMovieByTitleIgnoreCase("no existe")).thenThrow(new MovieNotFoundException("No encontrada"));
 
-        mockMvc.perform(get("/api/movies/findByTitle/no existe"))
+        mockMvc.perform(get("/api/movies/title/no existe"))
                 .andExpect(status().isNotFound());
     }
 
@@ -150,9 +150,9 @@ class MovieControllerTest {
         voted.setVotes(1);
         voted.setRating(5.0);
 
-        Mockito.when(movieService.voteMovie(1L, 5.0)).thenReturn(voted);
+        Mockito.when(movieService.voteMovie(1L, 1L,5.0)).thenReturn(voted);
 
-        mockMvc.perform(put("/api/movies/1/5.0"))
+        mockMvc.perform(put("/api/movies/1/vote/1/5.0"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.rating").value(5.0))
                 .andExpect(jsonPath("$.votes").value(1));
@@ -160,10 +160,10 @@ class MovieControllerTest {
 
     @Test
     void voteMovieNotFound() throws Exception {
-        Mockito.when(movieService.voteMovie(99L, 5.0))
+        Mockito.when(movieService.voteMovie(99L, 99L,5.0))
                 .thenThrow(new MovieNotFoundException("No encontrada"));
 
-        mockMvc.perform(put("/api/movies/99/5.0"))
+        mockMvc.perform(put("/api/movies/99/vote/99/5.0"))
                 .andExpect(status().isNotFound());
     }
 

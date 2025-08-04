@@ -2,7 +2,10 @@ package com.estebanmmk13.movies.services;
 
 import com.estebanmmk13.movies.error.notFound.MovieNotFoundException;
 import com.estebanmmk13.movies.models.Movie;
+import com.estebanmmk13.movies.models.User;
+import com.estebanmmk13.movies.models.Vote;
 import com.estebanmmk13.movies.repositories.MovieRepository;
+import com.estebanmmk13.movies.repositories.VoteRepository;
 import com.estebanmmk13.movies.services.movie.MovieService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -28,7 +31,12 @@ class MovieServiceTest {
     @MockitoBean
     private MovieRepository movieRepository;
 
+    @MockitoBean
+    private VoteRepository voteRepository;
+
     private Movie movie;
+
+    private User user;
 
     @BeforeEach
     void setUp() {
@@ -39,6 +47,11 @@ class MovieServiceTest {
                 .movieYear(2003)
                 .votes(10)
                 .rating(4.5)
+                .build();
+
+        user = User.builder()
+                .id(1L)
+                .username("Esteban")
                 .build();
     }
 
@@ -117,16 +130,21 @@ class MovieServiceTest {
     }
 
     @Test
-    @DisplayName("Debería votar una película y actualizar rating y votos")
+    @DisplayName("Debería votar una película y actualizar rating y votos, y guardar un voto")
     void vote() {
         Mockito.when(movieRepository.findById(1L)).thenReturn(Optional.of(movie));
-        Mockito.when(movieRepository.save(Mockito.any(Movie.class))).thenAnswer(inv -> inv.getArgument(0));
+        Mockito.when(movieRepository.save(Mockito.any(Movie.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        Mockito.when(voteRepository.save(Mockito.any(Vote.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        double newVote = 5.0;
-        Movie result = movieService.voteMovie(1L, newVote);
+        double newVoteRating = 5.0;
+
+        Movie result = movieService.voteMovie(1L, 1L,newVoteRating);
 
         assertEquals(11, result.getVotes());
-        assertEquals(((10 * 4.5) + newVote) / 11, result.getRating());
+        assertEquals(((10 * 4.5) + newVoteRating) / 11, result.getRating());
+
+        // Verificamos que se haya guardado el voto
+        Mockito.verify(voteRepository).save(Mockito.any(Vote.class));
     }
 
     @Test
@@ -134,7 +152,7 @@ class MovieServiceTest {
     void voteNotFound() {
         Mockito.when(movieRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(MovieNotFoundException.class, () -> movieService.voteMovie(99L, 4.0));
+        assertThrows(MovieNotFoundException.class, () -> movieService.voteMovie(99L,99L ,4.0));
     }
 
     @Test

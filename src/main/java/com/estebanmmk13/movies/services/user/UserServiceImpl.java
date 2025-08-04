@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+import static com.estebanmmk13.movies.error.notFound.UserNotFoundException.*;
+
 @Service
 public class UserServiceImpl implements UserService {
 
@@ -22,7 +24,7 @@ public class UserServiceImpl implements UserService {
     public User findUserById(Long id) {
 
         return userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException("User with ID " + id + " not found"));
+                .orElseThrow(() -> new UserNotFoundException(String.format(NOT_FOUND_BY_ID,id)));
     }
 
     @Override
@@ -32,7 +34,7 @@ public class UserServiceImpl implements UserService {
     public User updateUser(Long id, User user) {
 
         User existingUser = userRepository.findById(id)
-                        .orElseThrow(() -> new UserNotFoundException("User with ID " + id + " not found"));
+                        .orElseThrow(() -> new UserNotFoundException(String.format(NOT_FOUND_BY_ID,id)));
 
         user.setId(id);
         return userRepository.save(user);
@@ -42,7 +44,7 @@ public class UserServiceImpl implements UserService {
     public void deleteUser(Long id) {
 
         if (!userRepository.existsById(id)) {
-            throw new MovieNotFoundException("User with ID " + id + " not found");
+            throw new MovieNotFoundException(String.format(NOT_FOUND_BY_ID,id));
         }
         userRepository.deleteById(id);
     }
@@ -50,13 +52,13 @@ public class UserServiceImpl implements UserService {
     @Override
     public User findUserByUsernameIgnoreCase(String username) {
         return userRepository.findUserByUsernameIgnoreCase(username)
-                .orElseThrow(() -> new UserNotFoundException("User with username " + username + " not found"));
+                .orElseThrow(() -> new UserNotFoundException(String.format(NOT_FOUND_BY_USERNAME,username)));
     }
 
     @Override
     public User findUserByEmail(String email) {
         return userRepository.findUserByEmail(email)
-                .orElseThrow(() -> new UserNotFoundException("User with email " + email + " not found"));
+                .orElseThrow(() -> new UserNotFoundException(String.format(NOT_FOUND_BY_EMAIL,email)));
     }
 
     @Override

@@ -55,16 +55,25 @@ public class MovieController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/findByTitle/{title}")
+    @GetMapping("/title/{title}")
     public ResponseEntity<Movie> findMovieByTitle(@PathVariable String title) {
         Movie movie = movieService.findMovieByTitleIgnoreCase(title);
         return ResponseEntity.ok(movie);
     }
 
-    @PutMapping("/{id}/{rating}")
-    public ResponseEntity<Movie> voteMovie(@PathVariable Long id, @PathVariable Double rating) {
-        Movie voted = movieService.voteMovie(id, rating);
+    @PutMapping("/{movieId}/vote/{userId}/{rating}")
+    public ResponseEntity<Movie> voteMovie(
+            @PathVariable Long movieId,
+            @PathVariable Long userId,
+            @PathVariable Double rating) {
+        Movie voted = movieService.voteMovie(movieId, userId, rating);
         return ResponseEntity.ok(voted);
+    }
+
+    @GetMapping("/genre/{name}")
+    public ResponseEntity<List<Movie>> findAllMoviesByGenre(@PathVariable String name) {
+        List<Movie> movies = movieService.findAllMoviesByGenreIgnoreCase(name);
+        return ResponseEntity.ok(movies);
     }
 
 }

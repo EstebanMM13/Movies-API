@@ -26,7 +26,7 @@ public class Vote {
     @ManyToOne
     private User user;
 
-    private int rating;
+    private Double rating;
 
     private LocalDateTime votedAt;
 }

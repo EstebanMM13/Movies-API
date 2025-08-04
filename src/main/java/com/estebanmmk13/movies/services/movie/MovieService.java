@@ -18,8 +18,10 @@ public interface MovieService {
 
     void  deleteMovie(Long id);
 
-    Movie voteMovie(Long id, Double rating);
+    Movie voteMovie(Long movieId, Long userId, Double rating);
 
     Movie findMovieByTitleIgnoreCase(String title);
+
+    List<Movie> findAllMoviesByGenreIgnoreCase(String name);
 }
 

@@ -24,7 +24,8 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
             UserNotFoundException.class,
             GenreNotFoundException.class,
             ReviewNotFoundException.class,
-            VoteNotFoundException.class
+            VoteNotFoundException.class,
+            DuplicateVoteException.class
     })
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ResponseEntity<ErrorMessage> handleNotFoundExceptions(RuntimeException exception) {

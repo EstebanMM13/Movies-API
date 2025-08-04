@@ -1,18 +1,33 @@
 package com.estebanmmk13.movies.services.movie;
 
+import com.estebanmmk13.movies.error.DuplicateVoteException;
 import com.estebanmmk13.movies.error.notFound.MovieNotFoundException;
+import com.estebanmmk13.movies.error.notFound.UserNotFoundException;
 import com.estebanmmk13.movies.models.Movie;
+import com.estebanmmk13.movies.models.User;
+import com.estebanmmk13.movies.models.Vote;
 import com.estebanmmk13.movies.repositories.MovieRepository;
+import com.estebanmmk13.movies.repositories.UserRepository;
+import com.estebanmmk13.movies.repositories.VoteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
+
+import static com.estebanmmk13.movies.error.notFound.MovieNotFoundException.*;
 
 @Service
 public class MovieServiceImpl implements MovieService {
 
     @Autowired
     private MovieRepository movieRepository;
+
+    @Autowired
+    private VoteRepository voteRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     public List<Movie> findAllMovies() {
         return movieRepository.findAll();
@@ -22,7 +37,7 @@ public class MovieServiceImpl implements MovieService {
     public Movie findMovieById(Long id) {
 
         return movieRepository.findById(id)
-                .orElseThrow(() -> new MovieNotFoundException("Movie is not available"));
+                .orElseThrow(() -> new MovieNotFoundException(String.format(NOT_FOUND_BY_ID, id)));
     }
 
     public Movie createMovie(Movie movie) {
@@ -32,7 +47,7 @@ public class MovieServiceImpl implements MovieService {
     public Movie updateMovie(Long id, Movie movie) {
 
         Movie existingMovie = movieRepository.findById(id)
-                .orElseThrow(() -> new MovieNotFoundException("Movie with ID " + id + " not found"));
+                .orElseThrow(() -> new MovieNotFoundException(String.format(NOT_FOUND_BY_ID, id)));
 
         movie.setId(id);
         return movieRepository.save(movie);
@@ -41,19 +56,37 @@ public class MovieServiceImpl implements MovieService {
     public void deleteMovie(Long id) {
 
         if (!movieRepository.existsById(id)) {
-            throw new MovieNotFoundException("Movie with ID " + id + " not found");
+            throw new MovieNotFoundException(String.format(NOT_FOUND_BY_ID, id));
         }
         movieRepository.deleteById(id);
     }
 
-    public Movie voteMovie(Long id, Double rating) {
+    public Movie voteMovie(Long movieId, Long userId, Double rating) {
+        Movie movie = movieRepository.findById(movieId)
+                .orElseThrow(() -> new MovieNotFoundException(String.format(NOT_FOUND_BY_ID,movieId)));
 
-        Movie movie = movieRepository.findById(id)
-                .orElseThrow(() -> new MovieNotFoundException("Movie with ID " + id + " not found"));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(String.format(NOT_FOUND_BY_ID,userId)));
 
-        double newRating = ((movie.getVotes() * movie.getRating()) + rating) / (movie.getVotes() + 1);
-        movie.setVotes(movie.getVotes() + 1);
-        movie.setRating(newRating);
+        if (voteRepository.existsByUserAndMovie(user, movie)) {
+            throw new DuplicateVoteException("You already voted this movie.");
+        }
+
+        Vote vote = Vote.builder()
+                .movie(movie)
+                .user(user)
+                .rating(rating)
+                .votedAt(LocalDateTime.now())
+                .build();
+
+        voteRepository.save(vote);
+
+        // Actualizar rating promedio y número de votos
+        double totalRating = movie.getRating() * movie.getVotes() + rating;
+        int totalVotes = movie.getVotes() + 1;
+        movie.setVotes(totalVotes);
+        movie.setRating(totalRating / totalVotes);
+
         return movieRepository.save(movie);
     }
 
@@ -61,6 +94,12 @@ public class MovieServiceImpl implements MovieService {
     public Movie findMovieByTitleIgnoreCase(String title) {
 
         return movieRepository.findMovieByTitleIgnoreCase(title)
-                .orElseThrow(() -> new MovieNotFoundException("Movie with title '" + title + "' not found"));
+                .orElseThrow(() -> new MovieNotFoundException(String.format(NOT_FOUND_BY_TITLE, title)));
     }
+
+    @Override
+    public List<Movie> findAllMoviesByGenreIgnoreCase(String name) {
+        return movieRepository.findAllByGenreNameIgnoreCase(name);
+    }
+
 }
