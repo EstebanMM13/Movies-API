@@ -15,6 +15,7 @@ public interface ReviewService {
 
     Review updateReview(Long id, Long userId, String comment);
 
+
     void deleteReview(Long reviewId,Long userId);
 
     List<Review> findReviewsByMovieId(Long movieId);
