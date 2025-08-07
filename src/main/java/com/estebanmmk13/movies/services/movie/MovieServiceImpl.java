@@ -91,9 +91,9 @@ public class MovieServiceImpl implements MovieService {
     }
 
     @Override
-    public Movie findMovieByTitleIgnoreCase(String title) {
+    public List<Movie> findMovieByTitleIgnoreCaseContaining(String title) {
 
-        return movieRepository.findMovieByTitleIgnoreCase(title)
+        return movieRepository.findMovieByTitleIgnoreCaseContaining(title)
                 .orElseThrow(() -> new MovieNotFoundException(String.format(NOT_FOUND_BY_TITLE, title)));
     }
 

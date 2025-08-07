@@ -49,6 +49,10 @@ public class ReviewServiceImpl implements ReviewService{
         Movie movie = movieRepository.findById(movieId)
                 .orElseThrow(() -> new MovieNotFoundException(String.format(NOT_FOUND_BY_ID,movieId)));
 
+        if (reviewRepository.existsByUserIdAndMovieId(userId,movieId)){
+            throw new RuntimeException("User already submitted a review for this movie");
+        }
+
         Review review = Review.builder()
                 .user(user)
                 .movie(movie)

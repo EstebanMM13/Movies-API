@@ -158,9 +158,9 @@ class MovieServiceTest {
     @Test
     @DisplayName("Debería encontrar una película por título ignorando mayúsculas")
     void findByTitleIgnoreCase() {
-        Mockito.when(movieRepository.findMovieByTitleIgnoreCase("el retorno del rey")).thenReturn(Optional.of(movie));
+        Mockito.when(movieRepository.findMovieByTitleIgnoreCaseContaining("el retorno del rey")).thenReturn(Optional.of(movie));
 
-        Movie result = movieService.findMovieByTitleIgnoreCase("el retorno del rey");
+        Movie result = movieService.findMovieByTitleIgnoreCaseContaining("el retorno del rey");
 
         assertEquals(movie.getTitle(), result.getTitle());
     }

@@ -20,7 +20,7 @@ public interface MovieService {
 
     Movie voteMovie(Long movieId, Long userId, Double rating);
 
-    Movie findMovieByTitleIgnoreCase(String title);
+    List<Movie> findMovieByTitleIgnoreCaseContaining(String title);
 
     List<Movie> findAllMoviesByGenreIgnoreCase(String name);
 }

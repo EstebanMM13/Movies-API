@@ -56,9 +56,9 @@ public class MovieController {
     }
 
     @GetMapping("/title/{title}")
-    public ResponseEntity<Movie> findMovieByTitle(@PathVariable String title) {
-        Movie movie = movieService.findMovieByTitleIgnoreCase(title);
-        return ResponseEntity.ok(movie);
+    public ResponseEntity<List<Movie>> findMovieByTitle(@PathVariable String title) {
+        List<Movie> movies = movieService.findMovieByTitleIgnoreCaseContaining(title);
+        return ResponseEntity.ok(movies);
     }
 
     @PutMapping("/{movieId}/vote/{userId}/{rating}")

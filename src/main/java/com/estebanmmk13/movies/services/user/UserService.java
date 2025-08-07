@@ -18,7 +18,7 @@ public interface UserService {
 
     void deleteUser(Long id);
 
-    User findUserByUsernameIgnoreCase(String username);
+    User findUserByUsernameIgnoreCaseContaining(String username);
 
     User findUserByEmail(String email);
 

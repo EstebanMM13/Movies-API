@@ -74,7 +74,7 @@ class MovieControllerTest {
 
     @Test
     void findByTitle() throws Exception {
-        Mockito.when(movieService.findMovieByTitleIgnoreCase("peli jiji")).thenReturn(movie);
+        Mockito.when(movieService.findMovieByTitleIgnoreCaseContaining("peli jiji")).thenReturn(movie);
 
         mockMvc.perform(get("/api/movies/title/peli jiji"))
                 .andExpect(status().isOk())
@@ -83,7 +83,7 @@ class MovieControllerTest {
 
     @Test
     void findByTitleNotFound() throws Exception {
-        Mockito.when(movieService.findMovieByTitleIgnoreCase("no existe")).thenThrow(new MovieNotFoundException("No encontrada"));
+        Mockito.when(movieService.findMovieByTitleIgnoreCaseContaining("no existe")).thenThrow(new MovieNotFoundException("No encontrada"));
 
         mockMvc.perform(get("/api/movies/title/no existe"))
                 .andExpect(status().isNotFound());

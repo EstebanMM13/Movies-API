@@ -50,8 +50,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User findUserByUsernameIgnoreCase(String username) {
-        return userRepository.findUserByUsernameIgnoreCase(username)
+    public User findUserByUsernameIgnoreCaseContaining(String username) {
+        return userRepository.findUserByUsernameIgnoreCaseContaining(username)
                 .orElseThrow(() -> new UserNotFoundException(String.format(NOT_FOUND_BY_USERNAME,username)));
     }
 
