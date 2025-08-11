@@ -20,7 +20,7 @@ import java.util.Optional;
 @Repository
 public interface MovieRepository extends JpaRepository<Movie,Long>{
 
-    Optional<List<Movie>> findMovieByTitleIgnoreCaseContaining(String title);
+    List<Movie> findMovieByTitleIgnoreCaseContaining(String title);
 
     @Query("SELECT m FROM Movie m JOIN m.genres g WHERE LOWER(g.name) = LOWER(:name)")
     List<Movie> findAllByGenreNameIgnoreCase(@Param("name") String name);

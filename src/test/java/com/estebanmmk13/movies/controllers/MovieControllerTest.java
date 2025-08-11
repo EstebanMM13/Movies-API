@@ -74,11 +74,12 @@ class MovieControllerTest {
 
     @Test
     void findByTitle() throws Exception {
-        Mockito.when(movieService.findMovieByTitleIgnoreCaseContaining("peli jiji")).thenReturn(movie);
+        Mockito.when(movieService.findMovieByTitleIgnoreCaseContaining("peli jiji"))
+                .thenReturn(List.of(movie));
 
         mockMvc.perform(get("/api/movies/title/peli jiji"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.title").value("Peli jiji"));
+                .andExpect(jsonPath("$[0].title").value("Peli jiji"));
     }
 
     @Test

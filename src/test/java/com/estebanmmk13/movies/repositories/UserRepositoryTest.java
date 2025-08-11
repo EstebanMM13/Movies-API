@@ -55,7 +55,7 @@ class UserRepositoryTest {
     @Test
     @DisplayName("Debería encontrar un usuario por username ignorando mayúsculas")
     void findByUsernameIgnoreCaseShouldReturnUser() {
-        Optional<User> result = userRepository.findUserByUsernameIgnoreCase("estebanmm13");
+        Optional<User> result = userRepository.findUserByUsernameIgnoreCaseContaining("estebanmm13");
 
         assertTrue(result.isPresent());
         assertEquals("EstebanMM13", result.get().getUsername());
@@ -64,7 +64,7 @@ class UserRepositoryTest {
     @Test
     @DisplayName("Debería devolver vacío si username no existe")
     void findByUsernameIgnoreCaseShouldReturnEmptyIfNotExists() {
-        Optional<User> result = userRepository.findUserByUsernameIgnoreCase("inexistente");
+        Optional<User> result = userRepository.findUserByUsernameIgnoreCaseContaining("inexistente");
 
         assertTrue(result.isEmpty());
     }

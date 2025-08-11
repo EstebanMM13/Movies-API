@@ -5,6 +5,7 @@ import com.estebanmmk13.movies.models.Movie;
 import com.estebanmmk13.movies.models.User;
 import com.estebanmmk13.movies.models.Vote;
 import com.estebanmmk13.movies.repositories.MovieRepository;
+import com.estebanmmk13.movies.repositories.UserRepository;
 import com.estebanmmk13.movies.repositories.VoteRepository;
 import com.estebanmmk13.movies.services.movie.MovieService;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,6 +35,9 @@ class MovieServiceTest {
     @MockitoBean
     private VoteRepository voteRepository;
 
+    @MockitoBean
+    private UserRepository userRepository;
+
     private Movie movie;
 
     private User user;
@@ -53,6 +57,8 @@ class MovieServiceTest {
                 .id(1L)
                 .username("Esteban")
                 .build();
+
+        Mockito.when(userRepository.findById(1L)).thenReturn(Optional.of(user));
     }
 
     @Test
@@ -133,17 +139,17 @@ class MovieServiceTest {
     @DisplayName("Debería votar una película y actualizar rating y votos, y guardar un voto")
     void vote() {
         Mockito.when(movieRepository.findById(1L)).thenReturn(Optional.of(movie));
+        Mockito.when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         Mockito.when(movieRepository.save(Mockito.any(Movie.class))).thenAnswer(invocation -> invocation.getArgument(0));
         Mockito.when(voteRepository.save(Mockito.any(Vote.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         double newVoteRating = 5.0;
 
-        Movie result = movieService.voteMovie(1L, 1L,newVoteRating);
+        Movie result = movieService.voteMovie(1L, 1L, newVoteRating);
 
         assertEquals(11, result.getVotes());
         assertEquals(((10 * 4.5) + newVoteRating) / 11, result.getRating());
 
-        // Verificamos que se haya guardado el voto
         Mockito.verify(voteRepository).save(Mockito.any(Vote.class));
     }
 
@@ -156,13 +162,16 @@ class MovieServiceTest {
     }
 
     @Test
-    @DisplayName("Debería encontrar una película por título ignorando mayúsculas")
+    @DisplayName("Debería encontrar películas por título ignorando mayúsculas")
     void findByTitleIgnoreCase() {
-        Mockito.when(movieRepository.findMovieByTitleIgnoreCaseContaining("el retorno del rey")).thenReturn(Optional.of(movie));
+        Mockito.when(movieRepository.findMovieByTitleIgnoreCaseContaining("el retorno del rey"))
+                .thenReturn(List.of(movie));
 
-        Movie result = movieService.findMovieByTitleIgnoreCaseContaining("el retorno del rey");
+        List<Movie> result = movieService.findMovieByTitleIgnoreCaseContaining("el retorno del rey");
 
-        assertEquals(movie.getTitle(), result.getTitle());
+        assertEquals(1, result.size());
+        assertEquals(movie.getTitle(), result.get(0).getTitle());
     }
+
 }
 

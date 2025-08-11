@@ -49,7 +49,7 @@ public class UserController {
 
     @GetMapping("/username/{username}")
     public ResponseEntity<User> findUserByUsername(@PathVariable String username) {
-        User user = userService.findUserByUsernameIgnoreCaseContaining(username);
+        User user = userService.findUserByUsernameIgnoreCase(username);
         return ResponseEntity.ok(user);
     }
 

@@ -122,7 +122,7 @@ class UserServiceTest {
     @Test
     @DisplayName("Debería encontrar un usuario por username ignorando mayúsculas")
     void findByUsernameIgnoreCase() {
-        Mockito.when(userRepository.findUserByUsernameIgnoreCase("estebanmm13")).thenReturn(Optional.of(user));
+        Mockito.when(userRepository.findUserByUsernameIgnoreCaseContaining("estebanmm13")).thenReturn(Optional.of(user));
 
         User result = userService.findUserByUsernameIgnoreCase("estebanmm13");
 
@@ -132,7 +132,7 @@ class UserServiceTest {
     @Test
     @DisplayName("Debería lanzar excepción si el usuario no existe por username")
     void findByUsernameNotFound() {
-        Mockito.when(userRepository.findUserByUsernameIgnoreCase("noexiste")).thenReturn(Optional.empty());
+        Mockito.when(userRepository.findUserByUsernameIgnoreCaseContaining("noexiste")).thenReturn(Optional.empty());
 
         assertThrows(UserNotFoundException.class, () -> userService.findUserByUsernameIgnoreCase("noexiste"));
     }

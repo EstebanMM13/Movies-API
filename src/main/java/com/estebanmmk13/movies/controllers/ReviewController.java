@@ -1,8 +1,8 @@
 package com.estebanmmk13.movies.controllers;
 
-import com.estebanmmk13.movies.error.dto.ReviewUpdateDTO;
+import com.estebanmmk13.movies.config.ReviewMapper;
+import com.estebanmmk13.movies.modelsRest.ReviewRest;
 import com.estebanmmk13.movies.models.Review;
-import com.estebanmmk13.movies.models.modelsDTO.ReviewResponseDto;
 import com.estebanmmk13.movies.services.review.ReviewService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,56 +20,34 @@ public class ReviewController {
     @Autowired
     ReviewService reviewService;
 
+    @Autowired
+    ReviewMapper reviewMapper;
+
     @GetMapping
-    public ResponseEntity<List<ReviewResponseDto>> findReviewsByMovie(@PathVariable Long movieId) {
+    public ResponseEntity<List<ReviewRest>> findReviewsByMovie(@PathVariable Long movieId) {
         List<Review> reviews = reviewService.findReviewsByMovieId(movieId);
-        List<ReviewResponseDto> response = reviews.stream()
-                .map(review -> new ReviewResponseDto(
-                        review.getId(),
-                        review.getComment(),
-                        review.getUser().getId()
-                ))
-                .toList();
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(reviewMapper.toRestList(reviews));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ReviewResponseDto> findReviewById(@PathVariable Long id){
+    public ResponseEntity<ReviewRest> findReviewById(@PathVariable Long id){
         Review review = reviewService.findReviewById(id);
-        ReviewResponseDto dto = new ReviewResponseDto(
-                review.getId(),
-                review.getComment(),
-                review.getUser().getId()
-        );
-        return ResponseEntity.ok(dto);
+        return ResponseEntity.ok(reviewMapper.toRest(review));
     }
 
     @PostMapping
-    public ResponseEntity<ReviewResponseDto> createReview(@PathVariable Long movieId,
-                                               @RequestBody ReviewResponseDto dtoReview) {
+    public ResponseEntity<ReviewRest> createReview(@PathVariable Long movieId,
+                                               @RequestBody ReviewRest dtoReview) {
         Review review = reviewService.createReview(dtoReview.getUserId(), movieId, dtoReview.getComment());
-        ReviewResponseDto dtoCreated = new ReviewResponseDto(
-                review.getId(),
-                review.getComment(),
-                review.getUser().getId()
-        );
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(dtoCreated);
+        return ResponseEntity.status(HttpStatus.CREATED).body(reviewMapper.toRest(review));
     }
-
 
     @PatchMapping("/{id}")
-    public ResponseEntity<ReviewResponseDto> updateReview(@PathVariable Long id,
-                                               @RequestBody @Valid ReviewUpdateDTO dto) {
+    public ResponseEntity<ReviewRest> updateReview(@PathVariable Long id,
+                                               @RequestBody @Valid ReviewRest dto) {
         Review updatedReview = reviewService.updateReview(id, dto.getUserId(), dto.getComment());
-        ReviewResponseDto dtoUpdated = new ReviewResponseDto(
-                updatedReview.getId(),
-                updatedReview.getComment(),
-                updatedReview.getUser().getId()
-        );
-        return ResponseEntity.ok(dtoUpdated);
+        return ResponseEntity.ok(reviewMapper.toRest(updatedReview));
     }
-
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteReview(@PathVariable("id") Long reviewId,
