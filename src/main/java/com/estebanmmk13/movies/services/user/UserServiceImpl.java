@@ -49,8 +49,9 @@ public class UserServiceImpl implements UserService {
         userRepository.deleteById(id);
     }
 
+
     @Override
-    public User findUserByUsernameIgnoreCaseContaining(String username) {
+    public User findUserByUsernameIgnoreCase(String username) {
         return userRepository.findUserByUsernameIgnoreCaseContaining(username)
                 .orElseThrow(() -> new UserNotFoundException(String.format(NOT_FOUND_BY_USERNAME,username)));
     }
