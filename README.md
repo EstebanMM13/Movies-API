@@ -9,7 +9,7 @@ Movies API es una aplicación backend desarrollada con Spring Boot para gestiona
 ## Tecnologías utilizadas ⚙️
 
 - Java 17+
-- Spring Boot (Web, Data JPA, Validation)
+- Spring Boot (Web, Data JPA, Validation, Security)
 - Hibernate / JPA para persistencia
 - Base de datos H2 (para pruebas) y MySQL (producción)
 - Lombok para reducción de boilerplate
@@ -21,6 +21,7 @@ Movies API es una aplicación backend desarrollada con Spring Boot para gestiona
 - Gestión completa de películas con campos como título, descripción, año, imagen, votos y valoración.
 - Sistema de votación que registra votos y calcula valoraciones medias.
 - Validación de datos de entrada para garantizar integridad.
+- Seguridad con Spring Security y autenticación JWT.
 - Manejo de excepciones personalizado y respuestas REST coherentes.
 - Tests unitarios y de integración para asegurar calidad.
 
