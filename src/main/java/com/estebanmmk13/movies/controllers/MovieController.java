@@ -6,7 +6,9 @@ package com.estebanmmk13.movies.controllers;
 
 import com.estebanmmk13.movies.models.Movie;
 import com.estebanmmk13.movies.services.movie.MovieService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -55,8 +57,12 @@ public class MovieController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/title/{title}")
-    public ResponseEntity<List<Movie>> findMovieByTitle(@PathVariable String title) {
+    @GetMapping("/title")
+    public ResponseEntity<List<Movie>> findMovieByTitle(@RequestParam String title, HttpServletRequest request) throws BadRequestException {
+        if (title.isBlank()) {
+            throw new BadRequestException("Title parameter is required");
+        }
+
         List<Movie> movies = movieService.findMovieByTitleIgnoreCaseContaining(title);
         return ResponseEntity.ok(movies);
     }

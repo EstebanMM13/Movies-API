@@ -1,6 +1,7 @@
 package com.estebanmmk13.movies.models;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import org.hibernate.validator.constraints.Length;
@@ -29,7 +30,10 @@ public class Movie {
     @Length(min = 1, max = 200)
     private String description;
 
-    private int movieYear, votes;
+    @Min(value = 1888, message = "Year must be greater than 1888")
+    private int movieYear;
+
+    private int votes;
     private double rating;
 
     @Column(name = "image_url")
