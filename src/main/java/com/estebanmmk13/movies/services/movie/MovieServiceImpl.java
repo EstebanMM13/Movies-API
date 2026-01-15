@@ -10,6 +10,8 @@ import com.estebanmmk13.movies.repositories.MovieRepository;
 import com.estebanmmk13.movies.repositories.UserRepository;
 import com.estebanmmk13.movies.repositories.VoteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -29,8 +31,8 @@ public class MovieServiceImpl implements MovieService {
     @Autowired
     private UserRepository userRepository;
 
-    public List<Movie> findAllMovies() {
-        return movieRepository.findAll();
+    public Page<Movie> findAllMovies(Pageable pageable) {
+        return movieRepository.findAll(pageable);
     }
 
     @Override
@@ -91,9 +93,9 @@ public class MovieServiceImpl implements MovieService {
     }
 
     @Override
-    public List<Movie> findMovieByTitleIgnoreCaseContaining(String title) {
+    public Page<Movie> findMovieByTitleIgnoreCaseContaining(String title, Pageable pageable) {
 
-        return movieRepository.findMovieByTitleIgnoreCaseContaining(title);
+        return movieRepository.findMovieByTitleIgnoreCaseContaining(title,pageable);
     }
 
     @Override

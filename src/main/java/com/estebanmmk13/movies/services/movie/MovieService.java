@@ -1,14 +1,14 @@
 package com.estebanmmk13.movies.services.movie;
 
-import com.estebanmmk13.movies.error.notFound.MovieNotFoundException;
 import com.estebanmmk13.movies.models.Movie;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface MovieService {
 
-    List<Movie> findAllMovies();
+    Page<Movie> findAllMovies(Pageable pageable);
 
     Movie findMovieById(Long id);
 
@@ -20,7 +20,7 @@ public interface MovieService {
 
     Movie voteMovie(Long movieId, Long userId, Double rating);
 
-    List<Movie> findMovieByTitleIgnoreCaseContaining(String title);
+    Page<Movie> findMovieByTitleIgnoreCaseContaining(String title, Pageable pageable);
 
     List<Movie> findAllMoviesByGenreIgnoreCase(String name);
 }

@@ -5,6 +5,8 @@
 package com.estebanmmk13.movies.repositories;
 
 import com.estebanmmk13.movies.models.Movie;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,7 +22,7 @@ import java.util.Optional;
 @Repository
 public interface MovieRepository extends JpaRepository<Movie,Long>{
 
-    List<Movie> findMovieByTitleIgnoreCaseContaining(String title);
+    Page<Movie> findMovieByTitleIgnoreCaseContaining(String title, Pageable pageable);
 
     @Query("SELECT m FROM Movie m JOIN m.genres g WHERE LOWER(g.name) = LOWER(:name)")
     List<Movie> findAllByGenreNameIgnoreCase(@Param("name") String name);

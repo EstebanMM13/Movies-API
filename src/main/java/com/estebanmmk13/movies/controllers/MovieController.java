@@ -10,6 +10,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,8 +33,8 @@ public class MovieController {
     private MovieService movieService;
 
     @GetMapping
-    public List<Movie> findAllMovies() {
-        return movieService.findAllMovies();
+    public Page<Movie> findAllMovies(Pageable pageable) {
+        return movieService.findAllMovies(pageable);
     }
 
     @GetMapping("/{id}")
@@ -58,12 +62,11 @@ public class MovieController {
     }
 
     @GetMapping("/title")
-    public ResponseEntity<List<Movie>> findMovieByTitle(@RequestParam String title, HttpServletRequest request) throws BadRequestException {
+    public ResponseEntity<Page<Movie>> findMovieByTitle(@RequestParam String title, HttpServletRequest request, Pageable pageable) throws BadRequestException {
         if (title.isBlank()) {
             throw new BadRequestException("Title parameter is required");
         }
-
-        List<Movie> movies = movieService.findMovieByTitleIgnoreCaseContaining(title);
+        Page<Movie> movies = movieService.findMovieByTitleIgnoreCaseContaining(title,pageable);
         return ResponseEntity.ok(movies);
     }
 
