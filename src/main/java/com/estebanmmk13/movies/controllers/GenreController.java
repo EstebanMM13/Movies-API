@@ -5,6 +5,8 @@ import com.estebanmmk13.movies.models.Movie;
 import com.estebanmmk13.movies.services.genre.GenreService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +22,7 @@ public class GenreController {
     GenreService genreService;
 
     @GetMapping
-    public List<Genre> findAllGenre() {return genreService.findAllGenres();}
+    public Page<Genre> findAllGenre(Pageable pageable) {return genreService.findAllGenres(pageable);}
 
     @GetMapping("/{id}")
     public ResponseEntity<Genre> findGenreById(@PathVariable Long id){
@@ -47,8 +49,9 @@ public class GenreController {
     }
 
     @GetMapping("/name/{name}")
-    public ResponseEntity<Genre> findGenreByName(@PathVariable String name){
-        Genre genre = genreService.findGenreByNameIgnoreCase(name);
+    public ResponseEntity<Page<Genre>> findGenreByName(@PathVariable String name, Pageable pageable){
+
+        Page<Genre> genre = genreService.findGenreByName(name,pageable);
         return ResponseEntity.ok(genre);
     }
 

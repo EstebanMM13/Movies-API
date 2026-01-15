@@ -20,8 +20,8 @@ public interface MovieService {
 
     Movie voteMovie(Long movieId, Long userId, Double rating);
 
-    Page<Movie> findMovieByTitleIgnoreCaseContaining(String title, Pageable pageable);
+    Page<Movie> findMovieByTitleContaining(String title, Pageable pageable);
 
-    List<Movie> findAllMoviesByGenreIgnoreCase(String name);
+    Page<Movie> findAllMoviesByGenre(String name, Pageable pageable);
 }
 

@@ -1,12 +1,14 @@
 package com.estebanmmk13.movies.services.genre;
 
 import com.estebanmmk13.movies.models.Genre;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
 public interface GenreService {
 
-    List<Genre> findAllGenres();
+    Page<Genre> findAllGenres(Pageable pageable);
 
     Genre findGenreById(Long id);
 
@@ -16,5 +18,5 @@ public interface GenreService {
 
     void deleteGenre(Long id);
 
-    Genre findGenreByNameIgnoreCase(String name);
+    Page<Genre> findGenreByName(String name, Pageable pageable);
 }

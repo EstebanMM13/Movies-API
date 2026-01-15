@@ -93,14 +93,14 @@ public class MovieServiceImpl implements MovieService {
     }
 
     @Override
-    public Page<Movie> findMovieByTitleIgnoreCaseContaining(String title, Pageable pageable) {
+    public Page<Movie> findMovieByTitleContaining(String title, Pageable pageable) {
 
-        return movieRepository.findMovieByTitleIgnoreCaseContaining(title,pageable);
+        return movieRepository.findMovieByTitleContaining(title,pageable);
     }
 
     @Override
-    public List<Movie> findAllMoviesByGenreIgnoreCase(String name) {
-        return movieRepository.findAllByGenreNameIgnoreCase(name);
+    public Page<Movie> findAllMoviesByGenre(String name, Pageable pageable) {
+        return movieRepository.findAllByGenreName(name, pageable);
     }
 
 }

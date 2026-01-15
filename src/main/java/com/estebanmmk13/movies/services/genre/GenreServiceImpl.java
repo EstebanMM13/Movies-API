@@ -4,6 +4,8 @@ import com.estebanmmk13.movies.error.notFound.GenreNotFoundException;
 import com.estebanmmk13.movies.models.Genre;
 import com.estebanmmk13.movies.repositories.GenreRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,7 +19,7 @@ public class GenreServiceImpl implements GenreService{
     GenreRepository genreRespository;
 
     @Override
-    public List<Genre> findAllGenres() {return genreRespository.findAll();}
+    public Page<Genre> findAllGenres(Pageable pageable) {return genreRespository.findAll(pageable);}
 
     @Override
     public Genre findGenreById(Long id) {
@@ -48,8 +50,8 @@ public class GenreServiceImpl implements GenreService{
     }
 
     @Override
-    public Genre findGenreByNameIgnoreCase(String name) {
-        return genreRespository.findGenreByNameIgnoreCase(name)
+    public Page<Genre> findGenreByName(String name, Pageable pageable) {
+        return genreRespository.findGenreByNameContaining(name,pageable)
                 .orElseThrow(() -> new GenreNotFoundException(String.format(NOT_FOUND_BY_NAME,name)));
     }
 }

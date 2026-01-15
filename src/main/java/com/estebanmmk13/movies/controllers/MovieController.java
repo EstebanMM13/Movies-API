@@ -66,7 +66,7 @@ public class MovieController {
         if (title.isBlank()) {
             throw new BadRequestException("Title parameter is required");
         }
-        Page<Movie> movies = movieService.findMovieByTitleIgnoreCaseContaining(title,pageable);
+        Page<Movie> movies = movieService.findMovieByTitleContaining(title,pageable);
         return ResponseEntity.ok(movies);
     }
 
@@ -80,8 +80,8 @@ public class MovieController {
     }
 
     @GetMapping("/genre/{name}")
-    public ResponseEntity<List<Movie>> findAllMoviesByGenre(@PathVariable String name) {
-        List<Movie> movies = movieService.findAllMoviesByGenreIgnoreCase(name);
+    public ResponseEntity<Page<Movie>> findAllMoviesByGenre(@PathVariable String name, Pageable pageable) {
+        Page<Movie> movies = movieService.findAllMoviesByGenre(name, pageable);
         return ResponseEntity.ok(movies);
     }
 

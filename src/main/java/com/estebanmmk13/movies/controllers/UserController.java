@@ -4,6 +4,8 @@ import com.estebanmmk13.movies.models.User;
 import com.estebanmmk13.movies.services.user.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,8 +21,8 @@ public class UserController {
     UserService userService;
 
     @GetMapping
-    public List<User> findAllUsers() {
-        return userService.findAllUsers();
+    public Page<User> findAllUsers(Pageable pageable) {
+        return userService.findAllUsers(pageable);
     }
 
     @GetMapping("{id}")

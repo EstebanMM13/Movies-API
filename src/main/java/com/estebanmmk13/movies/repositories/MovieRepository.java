@@ -22,8 +22,8 @@ import java.util.Optional;
 @Repository
 public interface MovieRepository extends JpaRepository<Movie,Long>{
 
-    Page<Movie> findMovieByTitleIgnoreCaseContaining(String title, Pageable pageable);
+    Page<Movie> findMovieByTitleContaining(String title, Pageable pageable);
 
     @Query("SELECT m FROM Movie m JOIN m.genres g WHERE LOWER(g.name) = LOWER(:name)")
-    List<Movie> findAllByGenreNameIgnoreCase(@Param("name") String name);
+    Page<Movie> findAllByGenreName(@Param("name") String name, Pageable pageable);
 }

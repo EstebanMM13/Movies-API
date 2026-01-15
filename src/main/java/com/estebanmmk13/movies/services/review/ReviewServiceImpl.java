@@ -10,6 +10,8 @@ import com.estebanmmk13.movies.repositories.MovieRepository;
 import com.estebanmmk13.movies.repositories.ReviewRepository;
 import com.estebanmmk13.movies.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.AccessDeniedException;
@@ -92,12 +94,12 @@ public class ReviewServiceImpl implements ReviewService{
     }
 
     @Override
-    public List<Review> findReviewsByMovieId(Long movieId) {
-        return reviewRepository.findReviewsByMovieId(movieId);
+    public Page<Review> findReviewsByMovieId(Long movieId, Pageable pageable) {
+        return reviewRepository.findReviewsByMovieId(movieId, pageable);
     }
 
     @Override
-    public List<Review> findReviewsByUserId(Long userId) {
-        return reviewRepository.findReviewsByUserId(userId);
+    public Page<Review> findReviewsByUserId(Long userId, Pageable pageable) {
+        return reviewRepository.findReviewsByUserId(userId, pageable);
     }
 }

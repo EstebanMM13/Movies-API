@@ -8,6 +8,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -41,16 +44,32 @@ class GenreControllerTest {
                 .build();
     }
 
+    // ============================
+    // FIND ALL (PAGINADO)
+    // ============================
     @Test
     void findAllGenres() throws Exception {
-        Mockito.when(genreService.findAllGenres()).thenReturn(List.of(genre));
 
-        mockMvc.perform(get("/api/genres"))
+        Pageable pageable = Pageable.ofSize(10);
+        Page<Genre> genrePage = new PageImpl<>(List.of(genre), pageable, 1);
+
+        Mockito.when(genreService.findAllGenres(any(Pageable.class)))
+                .thenReturn(genrePage);
+
+        mockMvc.perform(get("/api/genres")
+                        .param("page", "0")
+                        .param("size", "10"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.size()").value(1))
-                .andExpect(jsonPath("$[0].name").value("Acción"));
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].name").value("Acción"))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.totalPages").value(1));
     }
 
+    // ============================
+    // FIND BY ID
+    // ============================
     @Test
     void findGenreById() throws Exception {
         Mockito.when(genreService.findGenreById(1L)).thenReturn(genre);
@@ -62,56 +81,83 @@ class GenreControllerTest {
 
     @Test
     void findGenreByIdNotFound() throws Exception {
-        Mockito.when(genreService.findGenreById(99L)).thenThrow(new GenreNotFoundException("No encontrado"));
+        Mockito.when(genreService.findGenreById(99L))
+                .thenThrow(new GenreNotFoundException("No encontrado"));
 
         mockMvc.perform(get("/api/genres/99"))
                 .andExpect(status().isNotFound());
     }
 
+    // ============================
+    // FIND BY NAME
+    // ============================
     @Test
     void findGenreByName() throws Exception {
-        Mockito.when(genreService.findGenreByNameIgnoreCase("acción")).thenReturn(genre);
 
-        mockMvc.perform(get("/api/genres/name/acción"))
+        Pageable pageable = Pageable.ofSize(10);
+        Page<Genre> genrePage = new PageImpl<>(List.of(genre), pageable, 1);
+
+        Mockito.when(genreService.findGenreByName(eq("acción"), any(Pageable.class)))
+                .thenReturn(genrePage);
+
+        mockMvc.perform(get("/api/genres/name/acción")
+                        .param("page", "0")
+                        .param("size", "10"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("Acción"));
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].name").value("Acción"));
     }
 
     @Test
     void findGenreByNameNotFound() throws Exception {
-        Mockito.when(genreService.findGenreByNameIgnoreCase("fantasía"))
+
+        Mockito.when(genreService.findGenreByName(eq("fantasía"), any(Pageable.class)))
                 .thenThrow(new GenreNotFoundException("No encontrado"));
 
-        mockMvc.perform(get("/api/genres/name/fantasía"))
+        mockMvc.perform(get("/api/genres/name/fantasía")
+                        .param("page", "0")
+                        .param("size", "10"))
                 .andExpect(status().isNotFound());
     }
 
+    // ============================
+    // CREATE
+    // ============================
     @Test
     void createGenre() throws Exception {
-        Mockito.when(genreService.createGenre(any(Genre.class))).thenReturn(genre);
+        Mockito.when(genreService.createGenre(any(Genre.class)))
+                .thenReturn(genre);
 
         mockMvc.perform(post("/api/genres")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                    "name": "Acción"
+                                  "name": "Acción"
                                 }
                                 """))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("Acción"));
     }
 
+    // ============================
+    // UPDATE
+    // ============================
     @Test
     void updateGenre() throws Exception {
-        Genre updated = Genre.builder().id(1L).name("Aventura").build();
+        Genre updated = Genre.builder()
+                .id(1L)
+                .name("Aventura")
+                .build();
 
-        Mockito.when(genreService.updateGenre(eq(1L), any(Genre.class))).thenReturn(updated);
+        Mockito.when(genreService.updateGenre(eq(1L), any(Genre.class)))
+                .thenReturn(updated);
 
         mockMvc.perform(patch("/api/genres/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                    "name": "Aventura"
+                                  "name": "Aventura"
                                 }
                                 """))
                 .andExpect(status().isOk())
@@ -127,12 +173,15 @@ class GenreControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                    "name": "Inexistente"
+                                  "name": "Inexistente"
                                 }
                                 """))
                 .andExpect(status().isNotFound());
     }
 
+    // ============================
+    // DELETE
+    // ============================
     @Test
     void deleteGenre() throws Exception {
         Mockito.doNothing().when(genreService).deleteGenre(1L);
@@ -143,10 +192,12 @@ class GenreControllerTest {
 
     @Test
     void deleteGenreNotFound() throws Exception {
-        Mockito.doThrow(new GenreNotFoundException("No encontrado")).when(genreService).deleteGenre(99L);
+        Mockito.doThrow(new GenreNotFoundException("No encontrado"))
+                .when(genreService).deleteGenre(99L);
 
         mockMvc.perform(delete("/api/genres/99"))
                 .andExpect(status().isNotFound());
     }
 }
+
 

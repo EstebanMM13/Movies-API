@@ -6,6 +6,8 @@ import com.estebanmmk13.movies.models.Review;
 import com.estebanmmk13.movies.services.review.ReviewService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,9 +26,10 @@ public class ReviewController {
     ReviewMapper reviewMapper;
 
     @GetMapping
-    public ResponseEntity<List<ReviewRest>> findReviewsByMovie(@PathVariable Long movieId) {
-        List<Review> reviews = reviewService.findReviewsByMovieId(movieId);
-        return ResponseEntity.ok(reviewMapper.toRestList(reviews));
+    public ResponseEntity<Page<ReviewRest>> findReviewsByMovie(@PathVariable Long movieId, Pageable pageable) {
+        Page<Review> reviewsPage = reviewService.findReviewsByMovieId(movieId, pageable);
+        Page<ReviewRest> reviewsRestPage = reviewsPage.map(reviewMapper::toRest);
+        return ResponseEntity.ok(reviewsRestPage);
     }
 
     @GetMapping("/{id}")
@@ -56,3 +59,4 @@ public class ReviewController {
         return ResponseEntity.noContent().build();
     }
 }
+
