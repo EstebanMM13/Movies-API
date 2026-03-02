@@ -8,6 +8,10 @@ import com.estebanmmk13.movies.models.Movie;
 import com.estebanmmk13.movies.services.movie.MovieService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -17,6 +21,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -29,8 +34,6 @@ public class MovieController {
     @Autowired
     private MovieService movieService;
 
-    // --------------------- CRUD ---------------------
-
     @Operation(
             summary = "Get all movies",
             description = "Retrieve a paginated list of all movies"
@@ -41,7 +44,22 @@ public class MovieController {
         return movieService.findAllMovies(pageable);
     }
 
-    @Operation(summary = "Get movie by ID")
+    @Operation(summary = "Obtener película por ID")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Película encontrada",
+                    content = @Content(schema = @Schema(implementation = Movie.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",  // ← Documentas el error
+                    description = "Película no encontrada",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class)  // ← Tu clase de error
+                    )
+            )
+    })
     @GetMapping("/{id}")
     public ResponseEntity<Movie> findMovieById(
             @Parameter(description = "ID of the movie to retrieve") @PathVariable Long id) {
@@ -73,8 +91,6 @@ public class MovieController {
         movieService.deleteMovie(id);
         return ResponseEntity.noContent().build();
     }
-
-    // --------------------- Custom queries ---------------------
 
     @Operation(summary = "Find movies by title")
     @GetMapping("/title")

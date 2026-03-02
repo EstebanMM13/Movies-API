@@ -6,42 +6,60 @@ import com.estebanmmk13.movies.models.RegisterRequest;
 import com.estebanmmk13.movies.services.auth.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
 @CrossOrigin
-@Tag(name = "Authentication", description = "Operations related to user authentication and registration")
+@Tag(name = "Authentication", description = "User authentication and registration endpoints")
 public class AuthController {
 
-    @Autowired
-    private AuthService authService;
+    private final AuthService authService;
+
+    public AuthController(AuthService authService) {
+        this.authService = authService;
+    }
 
     @Operation(
             summary = "Register a new user",
             description = "Creates a new user account and returns a JWT token"
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "User registered successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid registration data"),
+            @ApiResponse(responseCode = "403", description = "Email already exist"),
+            @ApiResponse(responseCode = "409", description = "User already exists")
+    })
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(
-            @Parameter(description = "User registration data")
+            @Parameter(description = "User registration data", required = true)
             @Valid @RequestBody RegisterRequest registerRequest) {
 
-        return ResponseEntity.ok(authService.register(registerRequest));
+        AuthResponse response = authService.register(registerRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @Operation(
             summary = "Authenticate user",
             description = "Authenticates user credentials and returns a JWT token"
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Authentication successful"),
+            @ApiResponse(responseCode = "400", description = "Invalid credentials"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
     @PostMapping("/authenticate")
     public ResponseEntity<AuthResponse> authenticate(
-            @Parameter(description = "User credentials")
+            @Parameter(description = "User credentials", required = true)
             @Valid @RequestBody AuthenticationRequest authenticationRequest) {
 
-        return ResponseEntity.ok(authService.authenticate(authenticationRequest));
+        AuthResponse response = authService.authenticate(authenticationRequest);
+        return ResponseEntity.ok(response);
     }
 }

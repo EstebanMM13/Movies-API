@@ -3,11 +3,11 @@ package com.estebanmmk13.movies.error;
 import com.estebanmmk13.movies.error.dto.ErrorResponse;
 import com.estebanmmk13.movies.error.notFound.*;
 import jakarta.servlet.http.HttpServletRequest;
-import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -27,7 +27,8 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
             UserNotFoundException.class,
             GenreNotFoundException.class,
             ReviewNotFoundException.class,
-            VoteNotFoundException.class
+            VoteNotFoundException.class,
+            ResourceNotFoundException.class
     })
     public ResponseEntity<ErrorResponse> handleNotFoundExceptions(RuntimeException ex, HttpServletRequest request) {
         ErrorResponse errorResponse = new ErrorResponse(
@@ -64,6 +65,30 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
 
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateResource(DuplicateResourceException ex, HttpServletRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    }
+
+    @ExceptionHandler({InvalidCredentialsException.class, BadCredentialsException.class})
+    public ResponseEntity<ErrorResponse> handleInvalidCredentials(Exception ex, HttpServletRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.UNAUTHORIZED.value(),
+                HttpStatus.UNAUTHORIZED.getReasonPhrase(),
+                "User or passwoed incorrect",
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+    }
+
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(
             MethodArgumentNotValidException ex,
@@ -76,28 +101,24 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
             fieldErrors.put(error.getField(), error.getDefaultMessage());
         });
 
-        // Obtener la URL del request
         String path = ((ServletWebRequest) request).getRequest().getRequestURI();
 
         ErrorResponse errorResponse = new ErrorResponse(
                 LocalDateTime.now(),
                 HttpStatus.BAD_REQUEST.value(),
                 HttpStatus.BAD_REQUEST.getReasonPhrase(),
-                "Validation failed",
+                "Error de validación en los campos enviados",
                 path
         );
 
-        // Añadir los detalles de los campos al JSON
         Map<String, Object> responseBody = new HashMap<>();
         responseBody.put("timestamp", errorResponse.getTimestamp());
         responseBody.put("status", errorResponse.getStatus());
         responseBody.put("error", errorResponse.getError());
         responseBody.put("message", errorResponse.getMessage());
         responseBody.put("path", errorResponse.getPath());
-        responseBody.put("details", fieldErrors);
+        responseBody.put("fieldErrors", fieldErrors);  // Nombre más claro
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseBody);
     }
-
 }
-
