@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 
 @Data
 @AllArgsConstructor
-public class ErrorResponse {
+public class ResponseError {
 
     private LocalDateTime timestamp;
     private int status;

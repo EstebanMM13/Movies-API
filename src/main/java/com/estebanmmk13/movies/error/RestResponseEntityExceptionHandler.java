@@ -1,6 +1,6 @@
 package com.estebanmmk13.movies.error;
 
-import com.estebanmmk13.movies.error.dto.ErrorResponse;
+import com.estebanmmk13.movies.error.dto.ResponseError;
 import com.estebanmmk13.movies.error.notFound.*;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpHeaders;
@@ -30,63 +30,63 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
             VoteNotFoundException.class,
             ResourceNotFoundException.class
     })
-    public ResponseEntity<ErrorResponse> handleNotFoundExceptions(RuntimeException ex, HttpServletRequest request) {
-        ErrorResponse errorResponse = new ErrorResponse(
+    public ResponseEntity<ResponseError> handleNotFoundExceptions(RuntimeException ex, HttpServletRequest request) {
+        ResponseError responseError = new ResponseError(
                 LocalDateTime.now(),
                 HttpStatus.NOT_FOUND.value(),
                 HttpStatus.NOT_FOUND.getReasonPhrase(),
                 ex.getMessage(),
                 request.getRequestURI()
         );
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseError);
     }
 
     @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<ErrorResponse> handleBadRequest(BadRequestException ex, HttpServletRequest request) {
-        ErrorResponse errorResponse = new ErrorResponse(
+    public ResponseEntity<ResponseError> handleBadRequest(BadRequestException ex, HttpServletRequest request) {
+        ResponseError responseError = new ResponseError(
                 LocalDateTime.now(),
                 HttpStatus.BAD_REQUEST.value(),
                 HttpStatus.BAD_REQUEST.getReasonPhrase(),
                 ex.getMessage(),
                 request.getRequestURI()
         );
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseError);
     }
 
     @ExceptionHandler(DuplicateVoteException.class)
-    public ResponseEntity<ErrorResponse> handleDuplicateVoteException(DuplicateVoteException ex, HttpServletRequest request) {
-        ErrorResponse errorResponse = new ErrorResponse(
+    public ResponseEntity<ResponseError> handleDuplicateVoteException(DuplicateVoteException ex, HttpServletRequest request) {
+        ResponseError responseError = new ResponseError(
                 LocalDateTime.now(),
                 HttpStatus.CONFLICT.value(),
                 HttpStatus.CONFLICT.getReasonPhrase(),
                 ex.getMessage(),
                 request.getRequestURI()
         );
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(responseError);
     }
 
     @ExceptionHandler(DuplicateResourceException.class)
-    public ResponseEntity<ErrorResponse> handleDuplicateResource(DuplicateResourceException ex, HttpServletRequest request) {
-        ErrorResponse errorResponse = new ErrorResponse(
+    public ResponseEntity<ResponseError> handleDuplicateResource(DuplicateResourceException ex, HttpServletRequest request) {
+        ResponseError responseError = new ResponseError(
                 LocalDateTime.now(),
                 HttpStatus.CONFLICT.value(),
                 HttpStatus.CONFLICT.getReasonPhrase(),
                 ex.getMessage(),
                 request.getRequestURI()
         );
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(responseError);
     }
 
     @ExceptionHandler({InvalidCredentialsException.class, BadCredentialsException.class})
-    public ResponseEntity<ErrorResponse> handleInvalidCredentials(Exception ex, HttpServletRequest request) {
-        ErrorResponse errorResponse = new ErrorResponse(
+    public ResponseEntity<ResponseError> handleInvalidCredentials(Exception ex, HttpServletRequest request) {
+        ResponseError responseError = new ResponseError(
                 LocalDateTime.now(),
                 HttpStatus.UNAUTHORIZED.value(),
                 HttpStatus.UNAUTHORIZED.getReasonPhrase(),
                 "User or passwoed incorrect",
                 request.getRequestURI()
         );
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(responseError);
     }
 
     @Override
@@ -103,7 +103,7 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
 
         String path = ((ServletWebRequest) request).getRequest().getRequestURI();
 
-        ErrorResponse errorResponse = new ErrorResponse(
+        ResponseError responseError = new ResponseError(
                 LocalDateTime.now(),
                 HttpStatus.BAD_REQUEST.value(),
                 HttpStatus.BAD_REQUEST.getReasonPhrase(),
@@ -112,11 +112,11 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
         );
 
         Map<String, Object> responseBody = new HashMap<>();
-        responseBody.put("timestamp", errorResponse.getTimestamp());
-        responseBody.put("status", errorResponse.getStatus());
-        responseBody.put("error", errorResponse.getError());
-        responseBody.put("message", errorResponse.getMessage());
-        responseBody.put("path", errorResponse.getPath());
+        responseBody.put("timestamp", responseError.getTimestamp());
+        responseBody.put("status", responseError.getStatus());
+        responseBody.put("error", responseError.getError());
+        responseBody.put("message", responseError.getMessage());
+        responseBody.put("path", responseError.getPath());
         responseBody.put("fieldErrors", fieldErrors);  // Nombre más claro
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseBody);
