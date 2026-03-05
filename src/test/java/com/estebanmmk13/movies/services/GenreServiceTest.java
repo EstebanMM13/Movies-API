@@ -1,24 +1,28 @@
 package com.estebanmmk13.movies.services;
 
-import org.junit.jupiter.api.BeforeEach;
 import com.estebanmmk13.movies.error.notFound.GenreNotFoundException;
 import com.estebanmmk13.movies.models.Genre;
 import com.estebanmmk13.movies.repositories.GenreRepository;
 import com.estebanmmk13.movies.services.genre.GenreService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-
 
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -31,6 +35,8 @@ class GenreServiceTest {
     private GenreRepository genreRepository;
 
     private Genre genre;
+    private Pageable pageable;
+    private Page<Genre> genrePage;
 
     @BeforeEach
     void setUp() {
@@ -38,94 +44,286 @@ class GenreServiceTest {
                 .id(1L)
                 .name("Acción")
                 .build();
+
+        pageable = PageRequest.of(0, 10);
+        genrePage = new PageImpl<>(List.of(genre), pageable, 1);
     }
 
     @Test
-    @DisplayName("Debería devolver todos los géneros")
-    void findAllGenres() {
-        List<Genre> genres = List.of(genre);
-        Mockito.when(genreRepository.findAll()).thenReturn(genres);
+    @DisplayName("Debería devolver todos los géneros paginados")
+    void findAllGenres_ShouldReturnPageOfGenres() {
+        // Given
+        when(genreRepository.findAll(any(Pageable.class))).thenReturn(genrePage);
 
-        List<Genre> result = genreService.findAllGenres();
-        assertEquals(1, result.size());
-        assertEquals("Acción", result.get(0).getName());
+        // When
+        Page<Genre> result = genreService.findAllGenres(pageable);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).getName()).isEqualTo("Acción");
+        assertThat(result.getTotalElements()).isEqualTo(1);
+
+        verify(genreRepository).findAll(pageable);
     }
 
     @Test
-    @DisplayName("Debería devolver un género por ID")
-    void findGenreById() {
-        Mockito.when(genreRepository.findById(1L)).thenReturn(Optional.of(genre));
+    @DisplayName("Debería devolver un género por ID cuando existe")
+    void findGenreById_WhenExists_ShouldReturnGenre() {
+        // Given
+        when(genreRepository.findById(1L)).thenReturn(Optional.of(genre));
 
+        // When
         Genre result = genreService.findGenreById(1L);
-        assertEquals("Acción", result.getName());
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getName()).isEqualTo("Acción");
+        verify(genreRepository).findById(1L);
     }
 
     @Test
     @DisplayName("Debería lanzar excepción si el género no existe por ID")
-    void findGenreByIdNotFound() {
-        Mockito.when(genreRepository.findById(99L)).thenReturn(Optional.empty());
+    void findGenreById_WhenNotExists_ShouldThrowException() {
+        // Given
+        when(genreRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(GenreNotFoundException.class, () -> genreService.findGenreById(99L));
+        // When & Then
+        assertThatThrownBy(() -> genreService.findGenreById(99L))
+                .isInstanceOf(GenreNotFoundException.class)
+                .hasMessageContaining("99");
+
+        verify(genreRepository).findById(99L);
     }
 
     @Test
-    @DisplayName("Debería crear un género")
-    void createGenre() {
-        Mockito.when(genreRepository.save(genre)).thenReturn(genre);
+    @DisplayName("Debería crear un género correctamente")
+    void createGenre_ShouldSaveAndReturnGenre() {
+        // Given
+        Genre newGenre = Genre.builder().name("Comedia").build();
+        when(genreRepository.existsByNameIgnoreCase("Comedia")).thenReturn(false);
+        when(genreRepository.save(any(Genre.class))).thenReturn(newGenre);
 
-        Genre result = genreService.createGenre(genre);
-        assertEquals("Acción", result.getName());
+        // When
+        Genre result = genreService.createGenre(newGenre);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getName()).isEqualTo("Comedia");
+
+        verify(genreRepository).existsByNameIgnoreCase("Comedia");
+        verify(genreRepository).save(newGenre);
+    }
+
+    @Test
+    @DisplayName("Debería lanzar excepción al crear un género duplicado")
+    void createGenre_WhenDuplicate_ShouldThrowException() {
+        // Given
+        Genre duplicateGenre = Genre.builder().name("Acción").build();
+        when(genreRepository.existsByNameIgnoreCase("Acción")).thenReturn(true);
+
+        // When & Then
+        assertThatThrownBy(() -> genreService.createGenre(duplicateGenre))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("already exists");
+
+        verify(genreRepository).existsByNameIgnoreCase("Acción");
+        verify(genreRepository, never()).save(any());
     }
 
     @Test
     @DisplayName("Debería actualizar un género existente")
-    void updateGenre() {
-        Mockito.when(genreRepository.findById(1L)).thenReturn(Optional.of(genre));
-        Mockito.when(genreRepository.save(Mockito.any(Genre.class))).thenReturn(genre);
+    void updateGenre_WhenExists_ShouldUpdateAndReturn() {
+        // Given
+        Genre updatedDetails = Genre.builder()
+                .name("Acción Extrema")
+                .build();
 
-        Genre result = genreService.updateGenre(1L, genre);
-        assertEquals("Acción", result.getName());
+        when(genreRepository.findById(1L)).thenReturn(Optional.of(genre));
+        when(genreRepository.existsByNameIgnoreCase("Acción Extrema")).thenReturn(false);
+        when(genreRepository.save(any(Genre.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // When
+        Genre result = genreService.updateGenre(1L, updatedDetails);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(1L);
+        assertThat(result.getName()).isEqualTo("Acción Extrema");
+
+        verify(genreRepository).findById(1L);
+        verify(genreRepository).existsByNameIgnoreCase("Acción Extrema");
+        verify(genreRepository).save(argThat(savedGenre ->
+                savedGenre.getName().equals("Acción Extrema")
+        ));
     }
 
     @Test
     @DisplayName("Debería lanzar excepción al actualizar un género inexistente")
-    void updateGenreNotFound() {
-        Mockito.when(genreRepository.findById(1L)).thenReturn(Optional.empty());
+    void updateGenre_WhenNotExists_ShouldThrowException() {
+        // Given
+        when(genreRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(GenreNotFoundException.class, () -> genreService.updateGenre(1L, genre));
+        // When & Then
+        assertThatThrownBy(() -> genreService.updateGenre(99L, genre))
+                .isInstanceOf(GenreNotFoundException.class)
+                .hasMessageContaining("99");
+
+        verify(genreRepository).findById(99L);
+        verify(genreRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Debería lanzar excepción al actualizar a un nombre que ya existe")
+    void updateGenre_WhenNameAlreadyExists_ShouldThrowException() {
+        // Given
+        Genre existingGenre = Genre.builder().id(2L).name("Drama").build();
+        Genre updatedDetails = Genre.builder().name("Drama").build();
+
+        when(genreRepository.findById(1L)).thenReturn(Optional.of(genre));
+        when(genreRepository.existsByNameIgnoreCase("Drama")).thenReturn(true);
+
+        // When & Then
+        assertThatThrownBy(() -> genreService.updateGenre(1L, updatedDetails))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("already exists");
+
+        verify(genreRepository).findById(1L);
+        verify(genreRepository).existsByNameIgnoreCase("Drama");
+        verify(genreRepository, never()).save(any());
     }
 
     @Test
     @DisplayName("Debería eliminar un género existente")
-    void deleteGenre() {
-        Mockito.when(genreRepository.existsById(1L)).thenReturn(true);
+    void deleteGenre_WhenExists_ShouldDelete() {
+        // Given
+        when(genreRepository.existsById(1L)).thenReturn(true);
 
+        // When
         genreService.deleteGenre(1L);
-        Mockito.verify(genreRepository).deleteById(1L);
+
+        // Then
+        verify(genreRepository).existsById(1L);
+        verify(genreRepository).deleteById(1L);
     }
 
     @Test
     @DisplayName("Debería lanzar excepción al eliminar un género inexistente")
-    void deleteGenreNotFound() {
-        Mockito.when(genreRepository.existsById(1L)).thenReturn(false);
+    void deleteGenre_WhenNotExists_ShouldThrowException() {
+        // Given
+        when(genreRepository.existsById(99L)).thenReturn(false);
 
-        assertThrows(GenreNotFoundException.class, () -> genreService.deleteGenre(1L));
+        // When & Then
+        assertThatThrownBy(() -> genreService.deleteGenre(99L))
+                .isInstanceOf(GenreNotFoundException.class)
+                .hasMessageContaining("99");
+
+        verify(genreRepository).existsById(99L);
+        verify(genreRepository, never()).deleteById(any());
     }
 
     @Test
-    @DisplayName("Debería encontrar género por nombre ignorando mayúsculas")
-    void findGenreByNameIgnoreCase() {
-        Mockito.when(genreRepository.findGenreByNameIgnoreCase("acción")).thenReturn(Optional.of(genre));
+    @DisplayName("Debería encontrar géneros por nombre (búsqueda parcial)")
+    void findGenreByName_ShouldReturnPageOfGenres() {
+        // Given
+        String searchTerm = "acc";
+        when(genreRepository.findByNameContainingIgnoreCase(eq(searchTerm), any(Pageable.class)))
+                .thenReturn(genrePage);
 
-        Genre result = genreService.findGenreByNameIgnoreCase("acción");
-        assertEquals("Acción", result.getName());
+        // When
+        Page<Genre> result = genreService.findGenreByName(searchTerm, pageable);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).getName()).containsIgnoringCase(searchTerm);
+
+        verify(genreRepository).findByNameContainingIgnoreCase(searchTerm, pageable);
     }
 
     @Test
-    @DisplayName("Debería lanzar excepción si no encuentra género por nombre")
-    void findGenreByNameIgnoreCaseNotFound() {
-        Mockito.when(genreRepository.findGenreByNameIgnoreCase("drama")).thenReturn(Optional.empty());
+    @DisplayName("Debería lanzar excepción al buscar con nombre vacío")
+    void findGenreByName_WithEmptyName_ShouldThrowException() {
+        // When & Then
+        assertThatThrownBy(() -> genreService.findGenreByName("", pageable))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("cannot be empty");
 
-        assertThrows(GenreNotFoundException.class, () -> genreService.findGenreByNameIgnoreCase("drama"));
+        assertThatThrownBy(() -> genreService.findGenreByName("   ", pageable))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("cannot be empty");
+
+        verify(genreRepository, never()).findByNameContainingIgnoreCase(any(), any());
+    }
+
+    @Test
+    @DisplayName("Debería devolver página vacía cuando no encuentra géneros por nombre")
+    void findGenreByName_WhenNoMatches_ShouldReturnEmptyPage() {
+        // Given
+        String searchTerm = "xyz";
+        Page<Genre> emptyPage = new PageImpl<>(List.of(), pageable, 0);
+        when(genreRepository.findByNameContainingIgnoreCase(eq(searchTerm), any(Pageable.class)))
+                .thenReturn(emptyPage);
+
+        // When
+        Page<Genre> result = genreService.findGenreByName(searchTerm, pageable);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getContent()).isEmpty();
+        assertThat(result.getTotalElements()).isZero();
+    }
+
+    @Test
+    @DisplayName("Debería encontrar género por nombre exacto (ignore case)")
+    void findGenreByExactName_WhenExists_ShouldReturnGenre() {
+        // Given
+        when(genreRepository.findByNameIgnoreCase("acción")).thenReturn(Optional.of(genre));
+
+        // When
+        Genre result = genreService.findGenreByExactName("acción");
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getName()).isEqualTo("Acción");
+
+        verify(genreRepository).findByNameIgnoreCase("acción");
+    }
+
+    @Test
+    @DisplayName("Debería lanzar excepción si no encuentra género por nombre exacto")
+    void findGenreByExactName_WhenNotExists_ShouldThrowException() {
+        // Given
+        when(genreRepository.findByNameIgnoreCase("drama")).thenReturn(Optional.empty());
+
+        // When & Then
+        assertThatThrownBy(() -> genreService.findGenreByExactName("drama"))
+                .isInstanceOf(GenreNotFoundException.class)
+                .hasMessageContaining("drama");
+
+        verify(genreRepository).findByNameIgnoreCase("drama");
+    }
+
+    @Test
+    @DisplayName("Debería manejar correctamente la paginación")
+    void shouldHandlePaginationCorrectly() {
+        // Given
+        List<Genre> manyGenres = List.of(
+                genre,
+                Genre.builder().id(2L).name("Comedia").build(),
+                Genre.builder().id(3L).name("Drama").build()
+        );
+        Page<Genre> pageWithThree = new PageImpl<>(manyGenres, pageable, 3);
+
+        when(genreRepository.findAll(any(Pageable.class))).thenReturn(pageWithThree);
+
+        // When
+        Page<Genre> result = genreService.findAllGenres(pageable);
+
+        // Then
+        assertThat(result.getContent()).hasSize(3);
+        assertThat(result.getTotalElements()).isEqualTo(3);
+        assertThat(result.getTotalPages()).isEqualTo(1);
+        assertThat(result.getNumber()).isZero();
     }
 }

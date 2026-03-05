@@ -1,36 +1,35 @@
 package com.estebanmmk13.movies.controllers;
 
 import com.estebanmmk13.movies.config.ReviewMapper;
-import com.estebanmmk13.movies.error.notFound.MovieNotFoundException;
 import com.estebanmmk13.movies.error.notFound.ReviewNotFoundException;
 import com.estebanmmk13.movies.models.Movie;
 import com.estebanmmk13.movies.models.Review;
 import com.estebanmmk13.movies.models.User;
 import com.estebanmmk13.movies.modelsRest.ReviewRest;
-import com.estebanmmk13.movies.services.movie.MovieService;
 import com.estebanmmk13.movies.services.review.ReviewService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(ReviewController.class)
+@SpringBootTest
+@AutoConfigureMockMvc
 @ActiveProfiles("test")
+@WithMockUser(username = "testuser", roles = "USER")
 class ReviewControllerTest {
 
     @Autowired
@@ -83,11 +82,11 @@ class ReviewControllerTest {
         mockMvc.perform(patch("/api/movies/1/reviews/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                        {
-                            "userId": 1,
-                            "comment": "Comentario actualizado"
-                        }
-                        """))
+                                {
+                                    "userId": 1,
+                                    "comment": "Comentario actualizado"
+                                }
+                                """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.comment").value("Comentario actualizado"));
     }
@@ -101,11 +100,11 @@ class ReviewControllerTest {
         mockMvc.perform(patch("/api/movies/1/reviews/99")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                            {
-                                "userId": 1,
-                                "comment": "Comentario"
-                            }
-                            """))
+                                {
+                                    "userId": 1,
+                                    "comment": "Comentario"
+                                }
+                                """))
                 .andExpect(status().isNotFound());
     }
 }

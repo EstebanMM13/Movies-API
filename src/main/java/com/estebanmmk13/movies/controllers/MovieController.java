@@ -29,7 +29,6 @@ public class MovieController {
         this.movieService = movieService;
     }
 
-
     // GET ALL MOVIES
     @Operation(
             summary = "Find all movies",
@@ -166,6 +165,11 @@ public class MovieController {
             @PathVariable Long userId,
             @Parameter(description = "Rating value (e.g., 1-5)", required = true)
             @PathVariable Double rating) {
+
+        // Validar rating
+        if (rating < 1.0 || rating > 10.0) {
+            throw new IllegalArgumentException("Rating must be between 1.0 and 5.0");
+        }
 
         return ResponseEntity.ok(
                 movieService.voteMovie(movieId, userId, rating)

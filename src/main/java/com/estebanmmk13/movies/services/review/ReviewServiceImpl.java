@@ -14,16 +14,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static com.estebanmmk13.movies.error.notFound.ReviewNotFoundException.*;
-import static com.estebanmmk13.movies.error.notFound.UserNotFoundException.*;
-import static com.estebanmmk13.movies.error.notFound.MovieNotFoundException.*;
+import static com.estebanmmk13.movies.error.notFound.ReviewNotFoundException.NOT_ACCES;
 
 @Service
-public class ReviewServiceImpl implements ReviewService{
+public class ReviewServiceImpl implements ReviewService {
 
     @Autowired
     ReviewRepository reviewRepository;
@@ -42,17 +39,17 @@ public class ReviewServiceImpl implements ReviewService{
     @Override
     public Review findReviewById(Long id) {
         return reviewRepository.findById(id)
-                .orElseThrow(() -> new ReviewNotFoundException(String.format(ReviewNotFoundException.NOT_FOUND_BY_ID,id)));
+                .orElseThrow(() -> new ReviewNotFoundException(String.format(ReviewNotFoundException.NOT_FOUND_BY_ID, id)));
     }
 
     @Override
     public Review createReview(Long userId, Long movieId, String comment) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(String.format(UserNotFoundException.NOT_FOUND_BY_ID,userId)));
+                .orElseThrow(() -> new UserNotFoundException(String.format(UserNotFoundException.NOT_FOUND_BY_ID, userId)));
         Movie movie = movieRepository.findById(movieId)
-                .orElseThrow(() -> new MovieNotFoundException(String.format(MovieNotFoundException.NOT_FOUND_BY_ID,movieId)));
+                .orElseThrow(() -> new MovieNotFoundException(String.format(MovieNotFoundException.NOT_FOUND_BY_ID, movieId)));
 
-        if (reviewRepository.existsByUserIdAndMovieId(userId,movieId)){
+        if (reviewRepository.existsByUserIdAndMovieId(userId, movieId)) {
             throw new RuntimeException("User already submitted a review for this movie");
         }
 
@@ -81,10 +78,10 @@ public class ReviewServiceImpl implements ReviewService{
 
 
     @Override
-    public void deleteReview(Long reviewId,Long userId) {
+    public void deleteReview(Long reviewId, Long userId) {
 
         Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new ReviewNotFoundException(String.format(ReviewNotFoundException.NOT_FOUND_BY_ID,reviewId)));
+                .orElseThrow(() -> new ReviewNotFoundException(String.format(ReviewNotFoundException.NOT_FOUND_BY_ID, reviewId)));
 
         if (!review.getUser().getId().equals(userId)) {
             throw new ReviewNotFoundException(NOT_ACCES);

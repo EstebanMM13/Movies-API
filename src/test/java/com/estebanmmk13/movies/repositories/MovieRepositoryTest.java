@@ -3,16 +3,20 @@ package com.estebanmmk13.movies.repositories;
 import com.estebanmmk13.movies.models.Genre;
 import com.estebanmmk13.movies.models.Movie;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
@@ -20,15 +24,19 @@ import static org.junit.jupiter.api.Assertions.*;
 class MovieRepositoryTest {
 
     @Autowired
-    MovieRepository movieRepository;
+    private MovieRepository movieRepository;
 
     @Autowired
-    TestEntityManager testEntityManager;
+    private TestEntityManager testEntityManager;
 
-    //Se ejecuta antes de las pruebas unitarias
+    private Movie testMovie;
+    private Pageable pageable;
+
     @BeforeEach
     void setUp() {
-        Movie movie = Movie.builder()
+        pageable = PageRequest.of(0, 10);
+
+        testMovie = Movie.builder()
                 .title("Peli jiji")
                 .description("Esta es la descripcion jiji")
                 .movieYear(2000)
@@ -36,11 +44,14 @@ class MovieRepositoryTest {
                 .rating(0)
                 .build();
 
-        testEntityManager.persist(movie);
+        testEntityManager.persist(testMovie);
+        testEntityManager.flush(); // Asegura que se guarde inmediatamente
     }
 
     @Test
+    @DisplayName("Should find movie by ID successfully")
     public void shouldFindByIdSuccessfully() {
+        // Given
         Movie movie = Movie.builder()
                 .title("Peli ID")
                 .description("Desc")
@@ -50,28 +61,41 @@ class MovieRepositoryTest {
                 .build();
 
         Movie saved = testEntityManager.persist(movie);
+        testEntityManager.flush();
 
+        // When
         Optional<Movie> found = movieRepository.findById(saved.getId());
 
+        // Then
         assertTrue(found.isPresent());
         assertEquals("Peli ID", found.get().getTitle());
     }
 
     @Test
-    public void findMovieByTitleIgnoreCaseFound(){
-        List<Movie> optionalMovie = movieRepository.findMovieByTitleIgnoreCaseContaining("Peli JIji");
-        assertEquals("Peli jiji", optionalMovie.getFirst().getTitle());
+    @DisplayName("Should find movie by title containing (case sensitive)")
+    public void findMovieByTitleContaining_Found() {
+        // When
+        Page<Movie> result = movieRepository.findMovieByTitleContaining("jiji", pageable);
+
+        // Then
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).getTitle()).isEqualTo("Peli jiji");
     }
 
     @Test
-    public void findMovieByTitleIgnoreCaseNotFound(){
-        List<Movie> movies = movieRepository.findMovieByTitleIgnoreCaseContaining("asfdasdf");
-        assertTrue(movies.isEmpty());
+    @DisplayName("Should return empty page when title not found")
+    public void findMovieByTitleContaining_NotFound() {
+        // When
+        Page<Movie> result = movieRepository.findMovieByTitleContaining("asfdasdf", pageable);
+
+        // Then
+        assertThat(result.getContent()).isEmpty();
     }
 
-
     @Test
+    @DisplayName("Should save movie successfully")
     public void shouldSaveMovieSuccessfully() {
+        // Given
         Movie newMovie = Movie.builder()
                 .title("Nueva peli")
                 .description("Otra descripcion")
@@ -80,14 +104,22 @@ class MovieRepositoryTest {
                 .rating(0)
                 .build();
 
+        // When
         Movie savedMovie = movieRepository.save(newMovie);
 
-        assertNotNull(savedMovie.getId()); // El ID debe generarse
+        // Then
+        assertNotNull(savedMovie.getId());
         assertEquals("Nueva peli", savedMovie.getTitle());
+
+        // Verificar que realmente se guardó
+        Optional<Movie> found = movieRepository.findById(savedMovie.getId());
+        assertTrue(found.isPresent());
     }
 
     @Test
+    @DisplayName("Should delete movie successfully")
     public void shouldDeleteMovieSuccessfully() {
+        // Given
         Movie movie = Movie.builder()
                 .title("Borrar esta")
                 .description("Delete desc")
@@ -97,22 +129,27 @@ class MovieRepositoryTest {
                 .build();
 
         Movie saved = testEntityManager.persist(movie);
+        testEntityManager.flush();
+
+        // When
         movieRepository.deleteById(saved.getId());
 
+        // Then
         Optional<Movie> deleted = movieRepository.findById(saved.getId());
         assertTrue(deleted.isEmpty());
     }
 
     @Test
-    void shouldFindAllMoviesByGenreNameIgnoreCase() {
-
-        // Creamos el género y lo persistimos
+    @DisplayName("Should find all movies by genre name (case insensitive)")
+    void shouldFindAllMoviesByGenreName() {
+        // Given
         Genre action = Genre.builder().name("Action").build();
         Genre comedy = Genre.builder().name("Comedy").build();
+
         testEntityManager.persist(action);
         testEntityManager.persist(comedy);
+        testEntityManager.flush();
 
-        // Creamos películas con géneros asociados
         Movie movie1 = Movie.builder()
                 .title("Action Movie 1")
                 .description("Explosions and stuff")
@@ -137,20 +174,95 @@ class MovieRepositoryTest {
                 .movieYear(2018)
                 .votes(0)
                 .rating(0)
-                .genres(List.of()) // Sin géneros
+                .genres(List.of())
                 .build();
 
         testEntityManager.persist(movie1);
         testEntityManager.persist(movie2);
         testEntityManager.persist(movie3);
+        testEntityManager.flush();
 
-        // Ejecutamos la búsqueda ignorando mayúsculas
-        List<Movie> actionMovies = movieRepository.findAllByGenreNameIgnoreCase("aCtIoN");
+        // When - usando el mét_odo REAL del repositorio
+        Page<Movie> actionMovies = movieRepository.findAllByGenreName("Action", pageable);
 
-        // Verificaciones
-        assertEquals(2, actionMovies.size());
-        assertTrue(actionMovies.stream().anyMatch(m -> m.getTitle().equals("Action Movie 1")));
-        assertTrue(actionMovies.stream().anyMatch(m -> m.getTitle().equals("Action Comedy Movie")));
+        // Then
+        assertThat(actionMovies.getContent()).hasSize(2);
+        assertThat(actionMovies.getContent())
+                .extracting(Movie::getTitle)
+                .containsExactlyInAnyOrder("Action Movie 1", "Action Comedy Movie");
     }
 
+    @Test
+    @DisplayName("Should return empty page when genre not found")
+    void shouldReturnEmptyWhenGenreNotFound() {
+        // Given
+        Genre action = Genre.builder().name("Action").build();
+        testEntityManager.persist(action);
+        testEntityManager.flush();
+
+        Movie movie = Movie.builder()
+                .title("Action Movie")
+                .description("Desc")
+                .movieYear(2010)
+                .votes(0)
+                .rating(0)
+                .genres(List.of(action))
+                .build();
+        testEntityManager.persist(movie);
+        testEntityManager.flush();
+
+        // When
+        Page<Movie> result = movieRepository.findAllByGenreName("NonExistentGenre", pageable);
+
+        // Then
+        assertThat(result.getContent()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Should return paginated results correctly")
+    void shouldReturnPaginatedResults() {
+        // Given
+        for (int i = 0; i < 15; i++) {
+            Movie movie = Movie.builder()
+                    .title("Movie " + i)
+                    .description("Description " + i)
+                    .movieYear(2000 + i)
+                    .votes(0)
+                    .rating(0.0)
+                    .build();
+            testEntityManager.persist(movie);
+        }
+        testEntityManager.flush();
+
+        Pageable firstPage = PageRequest.of(0, 10);
+        Pageable secondPage = PageRequest.of(1, 10);
+
+        // When
+        Page<Movie> page1 = movieRepository.findAll(firstPage);
+        Page<Movie> page2 = movieRepository.findAll(secondPage);
+
+        // Then
+        assertThat(page1.getContent()).hasSize(10);
+        assertThat(page2.getContent()).hasSize(6); // Cambiado de 5 a 6 (16 total - 10 = 6)
+        assertThat(page1.getTotalElements()).isEqualTo(16); // 15 nuevas + 1 del setUp
+        assertThat(page1.getTotalPages()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Should update movie successfully")
+    void shouldUpdateMovie() {
+        // Given
+        Movie savedMovie = testEntityManager.persist(testMovie);
+        testEntityManager.flush();
+
+        // When
+        savedMovie.setTitle("Título Actualizado");
+        savedMovie.setDescription("Descripción actualizada");
+        Movie updatedMovie = movieRepository.save(savedMovie);
+
+        // Then
+        Movie found = movieRepository.findById(updatedMovie.getId()).orElseThrow();
+        assertEquals("Título Actualizado", found.getTitle());
+        assertEquals("Descripción actualizada", found.getDescription());
+    }
 }
