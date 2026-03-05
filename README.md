@@ -1,52 +1,121 @@
-# Movies API 🎬
+# 🎬 Movies API
 
-¡Bienvenido a Movies API!
+A fully documented RESTful API built with Spring Boot for managing movies, users, genres, reviews and voting functionality.
 
-## Descripción 📝
+This project follows clean architecture principles and implements authentication, pagination, validation, and comprehensive testing.
 
-Movies API es una aplicación backend desarrollada con Spring Boot para gestionar una base de datos de películas. Permite realizar operaciones CRUD (Crear, Leer, Actualizar, Eliminar) sobre películas, así como funcionalidades adicionales como votar películas y gestionar valoraciones. 
-El proyecto está diseñado con buenas prácticas, separación de capas (controller, service, repository), autenticación con JWT, un enfoque claro en la lógica de negocio y manejo de errores.
+---
 
-## Tecnologías utilizadas ⚙️
+## 🚀 Features
 
-- Java 17+
+- 🔐 JWT Authentication (Register & Login)
+- 👤 User Management
+- 🎬 Full Movie CRUD
+- 🎭 Genre Management
+- ⭐ Review system per movie
+- 👍 Voting system with automatic rating calculation
+- 📄 Pagination & sorting support (Spring Pageable)
+- 📘 Swagger (OpenAPI 3) documentation
+- ❌ Global exception handling (`@ControllerAdvice`)
+- ✅ DTO layer with validation
+- 🧪 Unit & integration tests (Mockito + H2)
+
+---
+
+## 🛠 Tech Stack
+
+- Java 17
 - Spring Boot (Web, Data JPA, Validation, Security)
-- Hibernate / JPA para persistencia
-- Base de datos H2 (para pruebas) y MySQL (producción)
-- Lombok para reducción de boilerplate
-- JUnit y Mockito para testing
-- Maven como sistema de construcción
+- Hibernate / JPA
+- MySQL (production profile)
+- H2 (test profile)
+- JWT (stateless authentication)
+- Swagger / OpenAPI 3
+- Maven
+- JUnit & Mockito
 
-## Características principales 🚀
+---
 
-- Gestión completa de películas con campos como título, descripción, año, imagen, votos y valoración.
-- Sistema de votación que registra votos y calcula valoraciones medias.
-- Validación de datos de entrada para garantizar integridad.
-- Autenticación basada en tokens JWT para proteger endpoints
-- Manejo de excepciones personalizado y respuestas REST coherentes.
-- Tests unitarios y de integración para asegurar calidad.
+## 📘 API Documentation
 
-## Endpoints principales 🔗
+Swagger UI available at: http://localhost:8085/swagger-ui/index.html
 
-- POST  /auth/register
-- POST  /auth/authenticate
-- GET  /movies
-- GET /movies/title/{title}
-- POST  /movies
-- POST  /movies/{movieId}/reviews
+Controllers are grouped by domain:
+- Authentication
+- Users
+- Movies
+- Genres
+- Reviews
 
-## Ejecutar proyecto ▶️
+---
 
-Usa H2 por defecto para facilitar pruebas sin configuración adicional.
+## 📄 Pagination Example
 
-1. Clonar el repositorio
-2. Configurar application.properties (si aplica)
-3. Ejecutar con mvn spring-boot:run
-4. Acceder a http://localhost:8080
+All list endpoints support pagination using Spring `Pageable`.
 
-## Futuro desarrollo 🔮
+Example: GET /movies?page=0&size=5&sort=title,asc
 
-- Mejorar sistema de roles
-- Añadir paginación y filtros
-- Documentación con Swagger
-- Integración de un frontend desarrollado con Angular para consumir esta API y ofrecer una experiencia de usuario completa y moderna.
+Query parameters:
+- `page` → Page number (0-based)
+- `size` → Number of elements per page
+- `sort` → Field and direction (e.g., title,asc)
+
+---
+
+## 🔐 Authentication
+
+### Register
+POST /auth/register
+### Login
+POST /auth/authenticate
+
+Returns a JWT token that must be included in protected endpoints: 
+
+Authorization: Bearer YOUR_TOKEN
+
+---
+
+## 🏗 Architecture
+
+The project follows a layered architecture:
+Controller → Service → Repository → Database
+Additional structure:
+- DTO layer for API responses
+- Entity-to-DTO mapping
+- Centralized exception handling
+- Input validation using Jakarta Validation
+- Environment-based configuration (`dev`, `qa`, `test`)
+
+---
+
+## 🧪 Testing
+
+- Unit tests using Mockito
+- Integration tests with H2 in-memory database
+- Separate test profile configuration
+
+Run tests with: mvn test
+---
+
+## ▶ Run the Project
+
+1. Clone the repository
+2. Configure `application.yml` if needed
+3. Run: mvn spring-boot:run
+4. Access: http://localhost:8085
+---
+
+## 🔮 Future Improvements
+
+- Role-based authorization (ADMIN / USER)
+- Docker containerization
+- Refresh tokens
+- CI/CD integration
+- Advanced filtering (Specifications / Criteria API)
+
+---
+
+## 👨‍💻 Author
+
+Esteban Martínez  
+Backend Developer | Java & Spring Boot
