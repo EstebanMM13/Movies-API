@@ -1,74 +1,108 @@
 package com.estebanmmk13.movies.services.movie;
 
+import com.estebanmmk13.movies.dtoModels.MovieRequestDTO;
+import com.estebanmmk13.movies.dtoModels.MovieResponseDTO;
 import com.estebanmmk13.movies.error.DuplicateVoteException;
 import com.estebanmmk13.movies.error.notFound.MovieNotFoundException;
 import com.estebanmmk13.movies.error.notFound.UserNotFoundException;
+import com.estebanmmk13.movies.mapper.MovieMapper;
+import com.estebanmmk13.movies.models.Genre;
 import com.estebanmmk13.movies.models.Movie;
 import com.estebanmmk13.movies.models.User;
 import com.estebanmmk13.movies.models.Vote;
+import com.estebanmmk13.movies.repositories.GenreRepository;
 import com.estebanmmk13.movies.repositories.MovieRepository;
 import com.estebanmmk13.movies.repositories.UserRepository;
 import com.estebanmmk13.movies.repositories.VoteRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.estebanmmk13.movies.error.notFound.MovieNotFoundException.*;
 
 @Service
+@Transactional
 public class MovieServiceImpl implements MovieService {
 
-    @Autowired
-    private MovieRepository movieRepository;
+    private final MovieRepository movieRepository;
+    private final GenreRepository genreRepository;
+    private final VoteRepository voteRepository;
+    private final UserRepository userRepository;
+    private final MovieMapper movieMapper;
 
-    @Autowired
-    private VoteRepository voteRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    public Page<Movie> findAllMovies(Pageable pageable) {
-        return movieRepository.findAll(pageable);
+    // Constructor injection
+    public MovieServiceImpl(MovieRepository movieRepository,
+                            GenreRepository genreRepository,
+                            VoteRepository voteRepository,
+                            UserRepository userRepository,
+                            MovieMapper movieMapper) {
+        this.movieRepository = movieRepository;
+        this.genreRepository = genreRepository;
+        this.voteRepository = voteRepository;
+        this.userRepository = userRepository;
+        this.movieMapper = movieMapper;
     }
 
     @Override
-    public Movie findMovieById(Long id) {
-
-        return movieRepository.findById(id)
-                .orElseThrow(() -> new MovieNotFoundException(String.format(NOT_FOUND_BY_ID, id)));
+    public Page<MovieResponseDTO> findAllMovies(Pageable pageable) {
+        return movieRepository.findAll(pageable)
+                .map(movieMapper::toResponseDTO);
     }
 
-    public Movie createMovie(Movie movie) {
-        return movieRepository.save(movie);
+    @Override
+    public MovieResponseDTO findMovieById(Long id) {
+        Movie movie = movieRepository.findById(id)
+                .orElseThrow(() -> new MovieNotFoundException("Movie not found with id: " + id));
+        return movieMapper.toResponseDTO(movie);
     }
 
-    public Movie updateMovie(Long id, Movie movie) {
-
-        Movie existingMovie = movieRepository.findById(id)
-                .orElseThrow(() -> new MovieNotFoundException(String.format(NOT_FOUND_BY_ID, id)));
-
-        movie.setId(id);
-        return movieRepository.save(movie);
-    }
-
-    public void deleteMovie(Long id) {
-
-        if (!movieRepository.existsById(id)) {
-            throw new MovieNotFoundException(String.format(NOT_FOUND_BY_ID, id));
+    @Override
+    public MovieResponseDTO createMovie(MovieRequestDTO dto) {
+        Movie movie = movieMapper.toEntity(dto);
+        // Asignar géneros si vienen IDs
+        if (dto.getGenreIds() != null && !dto.getGenreIds().isEmpty()) {
+            List<Genre> genres = genreRepository.findAllById(dto.getGenreIds());
+            movie.setGenres(genres);
+        } else {
+            movie.setGenres(new ArrayList<>());
         }
-        movieRepository.deleteById(id);
+        Movie saved = movieRepository.save(movie);
+        return movieMapper.toResponseDTO(saved);
     }
 
-    public Movie voteMovie(Long movieId, Long userId, Double rating) {
-        Movie movie = movieRepository.findById(movieId)
-                .orElseThrow(() -> new MovieNotFoundException(String.format(NOT_FOUND_BY_ID,movieId)));
+    @Override
+    public MovieResponseDTO updateMovie(Long id, MovieRequestDTO dto) {
+        Movie existing = movieRepository.findById(id)
+                .orElseThrow(() -> new MovieNotFoundException("Movie not found with id: " + id));
+        movieMapper.updateEntity(existing, dto);
+        // Actualizar géneros si se proporcionan
+        if (dto.getGenreIds() != null) {
+            List<Genre> genres = genreRepository.findAllById(dto.getGenreIds());
+            existing.setGenres(genres);
+        }
+        Movie updated = movieRepository.save(existing);
+        return movieMapper.toResponseDTO(updated);
+    }
 
+    @Override
+    public void deleteMovie(Long id) {
+        Movie movie = movieRepository.findById(id)
+                .orElseThrow(() -> new MovieNotFoundException("Movie not found with id: " + id));
+        movieRepository.delete(movie);
+    }
+
+    @Override
+    public MovieResponseDTO voteMovie(Long movieId, Long userId, Double rating) {
+        Movie movie = movieRepository.findById(movieId)
+                .orElseThrow(() -> new MovieNotFoundException("Movie not found with id: " + movieId));
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(String.format(NOT_FOUND_BY_ID,userId)));
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + userId));
 
         if (voteRepository.existsByUserAndMovie(user, movie)) {
             throw new DuplicateVoteException("You already voted this movie.");
@@ -80,7 +114,6 @@ public class MovieServiceImpl implements MovieService {
                 .rating(rating)
                 .votedAt(LocalDateTime.now())
                 .build();
-
         voteRepository.save(vote);
 
         // Actualizar rating promedio y número de votos
@@ -89,18 +122,19 @@ public class MovieServiceImpl implements MovieService {
         movie.setVotes(totalVotes);
         movie.setRating(totalRating / totalVotes);
 
-        return movieRepository.save(movie);
+        Movie updatedMovie = movieRepository.save(movie);
+        return movieMapper.toResponseDTO(updatedMovie);
     }
 
     @Override
-    public Page<Movie> findMovieByTitleContaining(String title, Pageable pageable) {
-
-        return movieRepository.findMovieByTitleContaining(title,pageable);
+    public Page<MovieResponseDTO> findMovieByTitleContaining(String title, Pageable pageable) {
+        return movieRepository.findMovieByTitleContaining(title, pageable)
+                .map(movieMapper::toResponseDTO);
     }
 
     @Override
-    public Page<Movie> findAllMoviesByGenre(String name, Pageable pageable) {
-        return movieRepository.findAllByGenreName(name, pageable);
+    public Page<MovieResponseDTO> findAllMoviesByGenre(String name, Pageable pageable) {
+        return movieRepository.findAllByGenreName(name, pageable)
+                .map(movieMapper::toResponseDTO);
     }
-
 }

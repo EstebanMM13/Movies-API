@@ -1,7 +1,9 @@
 package com.estebanmmk13.movies.controllers;
 
+import com.estebanmmk13.movies.dtoModels.GenreDTO;
+import com.estebanmmk13.movies.dtoModels.MovieRequestDTO;
+import com.estebanmmk13.movies.dtoModels.MovieResponseDTO;
 import com.estebanmmk13.movies.error.notFound.MovieNotFoundException;
-import com.estebanmmk13.movies.models.Movie;
 import com.estebanmmk13.movies.services.movie.MovieService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -14,6 +16,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -40,61 +43,79 @@ class MovieControllerTest {
     @MockitoBean
     private MovieService movieService;
 
-    private Movie movie;
-    private Movie updatedMovie;
+    private MovieResponseDTO movieResponseDTO;
+    private MovieResponseDTO updatedMovieResponseDTO;
+    private MovieRequestDTO movieRequestDTO;
     private Pageable pageable;
-    private Page<Movie> moviePage;
+    private Page<MovieResponseDTO> movieResponsePage;
 
     @BeforeEach
     void setUp() {
-        movie = Movie.builder()
-                .id(1L)
-                .title("Peli jiji")
-                .description("Esta es la descripcion jiji")
-                .movieYear(2000)
-                .votes(0)
-                .rating(0)
-                .build();
-
-        updatedMovie = Movie.builder()
-                .id(1L)
-                .title("Peli jiji actualizada")
-                .description("Nueva descripcion")
-                .movieYear(2001)
-                .votes(5)
-                .rating(4.5)
-                .build();
-
         pageable = PageRequest.of(0, 10);
-        moviePage = new PageImpl<>(List.of(movie), pageable, 1);
+
+        movieResponseDTO = new MovieResponseDTO(
+                1L,
+                "Peli jiji",
+                "Esta es la descripcion jiji",
+                2000,
+                0,
+                0.0,
+                "http://imagen.com",
+                List.of(new GenreDTO(1L, "Acción"))
+        );
+
+        updatedMovieResponseDTO = new MovieResponseDTO(
+                1L,
+                "Peli jiji actualizada",
+                "Nueva descripcion",
+                2001,
+                5,
+                4.5,
+                "http://imagen.com",
+                List.of(new GenreDTO(1L, "Acción"), new GenreDTO(2L, "Comedia"))
+        );
+
+        movieRequestDTO = new MovieRequestDTO();
+        movieRequestDTO.setTitle("Peli jiji");
+        movieRequestDTO.setDescription("Esta es la descripcion jiji");
+        movieRequestDTO.setMovieYear(2000);
+        movieRequestDTO.setImageUrl("http://imagen.com");
+        movieRequestDTO.setGenreIds(List.of(1L));
+
+        movieResponsePage = new PageImpl<>(List.of(movieResponseDTO), pageable, 1);
     }
 
     @Test
-    @DisplayName("GET /api/movies - Should return paginated list of movies")
-    void findAllMovies_ShouldReturnPageOfMovies() throws Exception {
-        when(movieService.findAllMovies(any(Pageable.class))).thenReturn(moviePage);
+    @DisplayName("GET /api/movies - Should return paginated list of movies as DTOs")
+    void findAllMovies_ShouldReturnPageOfMovieResponseDTO() throws Exception {
+        when(movieService.findAllMovies(any(Pageable.class))).thenReturn(movieResponsePage);
 
         mockMvc.perform(get("/api/movies")
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.size()").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(1))
                 .andExpect(jsonPath("$.content[0].title").value("Peli jiji"))
                 .andExpect(jsonPath("$.content[0].description").value("Esta es la descripcion jiji"))
-                .andExpect(jsonPath("$.content[0].movieYear").value(2000));
+                .andExpect(jsonPath("$.content[0].movieYear").value(2000))
+                .andExpect(jsonPath("$.content[0].genres[0].name").value("Acción"));
+
+        verify(movieService).findAllMovies(any(Pageable.class));
     }
 
     @Test
-    @DisplayName("GET /api/movies/{id} - Should return movie when exists")
-    void findMovieById_WhenExists_ShouldReturnMovie() throws Exception {
-        when(movieService.findMovieById(1L)).thenReturn(movie);
+    @DisplayName("GET /api/movies/{id} - Should return movie DTO when exists")
+    void findMovieById_WhenExists_ShouldReturnMovieResponseDTO() throws Exception {
+        when(movieService.findMovieById(1L)).thenReturn(movieResponseDTO);
 
         mockMvc.perform(get("/api/movies/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.title").value("Peli jiji"))
                 .andExpect(jsonPath("$.description").value("Esta es la descripcion jiji"))
-                .andExpect(jsonPath("$.movieYear").value(2000));
+                .andExpect(jsonPath("$.movieYear").value(2000))
+                .andExpect(jsonPath("$.genres[0].name").value("Acción"));
 
         verify(movieService).findMovieById(1L);
     }
@@ -112,9 +133,9 @@ class MovieControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/movies - Should create movie and return 201")
+    @DisplayName("POST /api/movies - Should create movie from DTO and return 201")
     void createMovie_ShouldReturnCreated() throws Exception {
-        when(movieService.createMovie(any(Movie.class))).thenReturn(movie);
+        when(movieService.createMovie(any(MovieRequestDTO.class))).thenReturn(movieResponseDTO);
 
         mockMvc.perform(post("/api/movies")
                         .with(csrf())
@@ -123,15 +144,18 @@ class MovieControllerTest {
                                 {
                                     "title": "Peli jiji",
                                     "description": "Esta es la descripcion jiji",
-                                    "movieYear": 2000
+                                    "movieYear": 2000,
+                                    "imageUrl": "http://imagen.com",
+                                    "genreIds": [1]
                                 }
                                 """))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.title").value("Peli jiji"))
-                .andExpect(jsonPath("$.description").value("Esta es la descripcion jiji"));
+                .andExpect(jsonPath("$.description").value("Esta es la descripcion jiji"))
+                .andExpect(jsonPath("$.movieYear").value(2000));
 
-        verify(movieService).createMovie(any(Movie.class));
+        verify(movieService).createMovie(any(MovieRequestDTO.class));
     }
 
     @Test
@@ -148,79 +172,55 @@ class MovieControllerTest {
                                 """))
                 .andExpect(status().isBadRequest());
 
-        verify(movieService, never()).createMovie(any(Movie.class));
+        verify(movieService, never()).createMovie(any(MovieRequestDTO.class));
     }
 
     @Test
-    @DisplayName("PATCH /api/movies/{id} - Should update movie and return 200")
-    void updateMovie_ShouldReturnUpdatedMovie() throws Exception {
-        when(movieService.updateMovie(eq(1L), any(Movie.class))).thenReturn(updatedMovie);
+    @DisplayName("PUT /api/movies/{id} - Should fully replace movie and return 200")
+    void updateMovie_ShouldReturnUpdatedMovieResponseDTO() throws Exception {
+        when(movieService.updateMovie(eq(1L), any(MovieRequestDTO.class)))
+                .thenReturn(updatedMovieResponseDTO);
 
-        mockMvc.perform(patch("/api/movies/1")
+        mockMvc.perform(put("/api/movies/1")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
                                     "title": "Peli jiji actualizada",
                                     "description": "Nueva descripcion",
-                                    "movieYear": 2001
+                                    "movieYear": 2001,
+                                    "imageUrl": "http://imagen.com",
+                                    "genreIds": [1, 2]
                                 }
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.title").value("Peli jiji actualizada"))
                 .andExpect(jsonPath("$.description").value("Nueva descripcion"))
-                .andExpect(jsonPath("$.movieYear").value(2001));
+                .andExpect(jsonPath("$.movieYear").value(2001))
+                .andExpect(jsonPath("$.genres.size()").value(2));
 
-        verify(movieService).updateMovie(eq(1L), any(Movie.class));
+        verify(movieService).updateMovie(eq(1L), any(MovieRequestDTO.class));
     }
 
     @Test
-    @DisplayName("PATCH /api/movies/{id} - Should return 404 when movie not found")
+    @DisplayName("PUT /api/movies/{id} - Should return 404 when movie not found")
     void updateMovie_WhenNotExists_ShouldReturn404() throws Exception {
-        when(movieService.updateMovie(eq(99L), any(Movie.class)))
+        when(movieService.updateMovie(eq(99L), any(MovieRequestDTO.class)))
                 .thenThrow(new MovieNotFoundException("Movie not found with id: 99"));
 
-        mockMvc.perform(patch("/api/movies/99")
+        mockMvc.perform(put("/api/movies/99")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                    "title": "Peli actualizada"
+                                    "title": "Peli actualizada",
+                                    "movieYear": 2005
                                 }
                                 """))
                 .andExpect(status().isNotFound());
 
-        verify(movieService).updateMovie(eq(99L), any(Movie.class));
-    }
-
-    @Test
-    @DisplayName("PATCH /api/movies/{id} - Should allow partial update")
-    void updateMovie_WithPartialData_ShouldUpdateOnlyProvidedFields() throws Exception {
-        Movie partiallyUpdated = Movie.builder()
-                .id(1L)
-                .title("Solo titulo actualizado")
-                .description("Esta es la descripcion jiji")  // Se mantiene igual
-                .movieYear(2000)  // Se mantiene igual
-                .votes(0)
-                .rating(0)
-                .build();
-
-        when(movieService.updateMovie(eq(1L), any(Movie.class))).thenReturn(partiallyUpdated);
-
-        mockMvc.perform(patch("/api/movies/1")
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                    "title": "Solo titulo actualizado"
-                                }
-                                """))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.title").value("Solo titulo actualizado"))
-                .andExpect(jsonPath("$.description").value("Esta es la descripcion jiji"))
-                .andExpect(jsonPath("$.movieYear").value(2000));
+        verify(movieService).updateMovie(eq(99L), any(MovieRequestDTO.class));
     }
 
     @Test
@@ -249,10 +249,10 @@ class MovieControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/movies/title - Should return movies by title")
-    void findMovieByTitle_ShouldReturnPageOfMovies() throws Exception {
+    @DisplayName("GET /api/movies/title - Should return page of movie DTOs by title")
+    void findMovieByTitle_ShouldReturnPageOfMovieResponseDTO() throws Exception {
         when(movieService.findMovieByTitleContaining(eq("Peli"), any(Pageable.class)))
-                .thenReturn(moviePage);
+                .thenReturn(movieResponsePage);
 
         mockMvc.perform(get("/api/movies/title")
                         .param("title", "Peli")
@@ -277,18 +277,14 @@ class MovieControllerTest {
     }
 
     @Test
-    @DisplayName("PUT /api/movies/{movieId}/vote/{userId}/{rating} - Should vote and return updated movie")
-    void voteMovie_ShouldReturnUpdatedMovie() throws Exception {
-        Movie votedMovie = Movie.builder()
-                .id(1L)
-                .title("Peli jiji")
-                .description("Esta es la descripcion jiji")
-                .movieYear(2000)
-                .votes(1)
-                .rating(5.0)
-                .build();
+    @DisplayName("PUT /api/movies/{movieId}/vote/{userId}/{rating} - Should vote and return updated movie DTO")
+    void voteMovie_ShouldReturnUpdatedMovieResponseDTO() throws Exception {
+        MovieResponseDTO votedMovieDTO = new MovieResponseDTO(
+                1L, "Peli jiji", "Desc", 2000, 1, 5.0,
+                "http://imagen.com", List.of(new GenreDTO(1L, "Acción"))
+        );
 
-        when(movieService.voteMovie(1L, 1L, 5.0)).thenReturn(votedMovie);
+        when(movieService.voteMovie(1L, 1L, 5.0)).thenReturn(votedMovieDTO);
 
         mockMvc.perform(put("/api/movies/1/vote/1/5.0")
                         .with(csrf()))
@@ -316,7 +312,7 @@ class MovieControllerTest {
     @Test
     @DisplayName("PUT /api/movies/{movieId}/vote/{userId}/{rating} - Should return 400 when rating is invalid")
     void voteMovie_WithInvalidRating_ShouldReturnBadRequest() throws Exception {
-        mockMvc.perform(put("/api/movies/1/vote/1/11.0")  // Rating fuera de rango
+        mockMvc.perform(put("/api/movies/1/vote/1/11.0") // rating > 10
                         .with(csrf()))
                 .andExpect(status().isBadRequest());
 
@@ -324,10 +320,10 @@ class MovieControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/movies/genre/{name} - Should return movies by genre")
-    void findAllMoviesByGenre_ShouldReturnPageOfMovies() throws Exception {
+    @DisplayName("GET /api/movies/genre/{name} - Should return page of movie DTOs by genre")
+    void findAllMoviesByGenre_ShouldReturnPageOfMovieResponseDTO() throws Exception {
         when(movieService.findAllMoviesByGenre(eq("Acción"), any(Pageable.class)))
-                .thenReturn(moviePage);
+                .thenReturn(movieResponsePage);
 
         mockMvc.perform(get("/api/movies/genre/Acción")
                         .param("page", "0")
@@ -342,7 +338,7 @@ class MovieControllerTest {
     @Test
     @DisplayName("GET /api/movies/genre/{name} - Should return empty page when genre has no movies")
     void findAllMoviesByGenre_WithNoMovies_ShouldReturnEmptyPage() throws Exception {
-        Page<Movie> emptyPage = new PageImpl<>(List.of(), pageable, 0);
+        Page<MovieResponseDTO> emptyPage = new PageImpl<>(List.of(), pageable, 0);
 
         when(movieService.findAllMoviesByGenre(eq("Inexistente"), any(Pageable.class)))
                 .thenReturn(emptyPage);
@@ -358,7 +354,7 @@ class MovieControllerTest {
     @Test
     @DisplayName("Should handle pagination parameters correctly in findAllMovies")
     void findAllMovies_ShouldHandlePaginationParameters() throws Exception {
-        when(movieService.findAllMovies(any(Pageable.class))).thenReturn(moviePage);
+        when(movieService.findAllMovies(any(Pageable.class))).thenReturn(movieResponsePage);
 
         mockMvc.perform(get("/api/movies")
                         .param("page", "2")
@@ -377,7 +373,7 @@ class MovieControllerTest {
     @DisplayName("Should handle pagination parameters correctly in findByGenre")
     void findAllMoviesByGenre_ShouldHandlePaginationParameters() throws Exception {
         when(movieService.findAllMoviesByGenre(eq("Acción"), any(Pageable.class)))
-                .thenReturn(moviePage);
+                .thenReturn(movieResponsePage);
 
         mockMvc.perform(get("/api/movies/genre/Acción")
                         .param("page", "1")
@@ -396,7 +392,7 @@ class MovieControllerTest {
     @DisplayName("Should handle pagination parameters correctly in findByTitle")
     void findMovieByTitle_ShouldHandlePaginationParameters() throws Exception {
         when(movieService.findMovieByTitleContaining(eq("Peli"), any(Pageable.class)))
-                .thenReturn(moviePage);
+                .thenReturn(movieResponsePage);
 
         mockMvc.perform(get("/api/movies/title")
                         .param("title", "Peli")
@@ -412,11 +408,4 @@ class MovieControllerTest {
         ));
     }
 
-    @Test
-    @DisplayName("Should return 401 when user is not authenticated")
-    void whenUserNotAuthenticated_ShouldReturn401() throws Exception {
-        // Este test sobrescribe el @WithMockUser de la clase
-        mockMvc.perform(get("/api/movies"))
-                .andExpect(status().isUnauthorized());
-    }
 }

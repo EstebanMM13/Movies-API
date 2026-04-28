@@ -16,8 +16,7 @@ import org.springframework.test.context.ActiveProfiles;
 import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @ActiveProfiles("test")
@@ -41,16 +40,16 @@ class MovieRepositoryTest {
                 .description("Esta es la descripcion jiji")
                 .movieYear(2000)
                 .votes(0)
-                .rating(0)
+                .rating(0.0)
                 .build();
 
         testEntityManager.persist(testMovie);
-        testEntityManager.flush(); // Asegura que se guarde inmediatamente
+        testEntityManager.flush();
     }
 
     @Test
     @DisplayName("Should find movie by ID successfully")
-    public void shouldFindByIdSuccessfully() {
+    void shouldFindByIdSuccessfully() {
         // Given
         Movie movie = Movie.builder()
                 .title("Peli ID")
@@ -67,13 +66,13 @@ class MovieRepositoryTest {
         Optional<Movie> found = movieRepository.findById(saved.getId());
 
         // Then
-        assertTrue(found.isPresent());
-        assertEquals("Peli ID", found.get().getTitle());
+        assertThat(found).isPresent();
+        assertThat(found.get().getTitle()).isEqualTo("Peli ID");
     }
 
     @Test
     @DisplayName("Should find movie by title containing (case sensitive)")
-    public void findMovieByTitleContaining_Found() {
+    void findMovieByTitleContaining_Found() {
         // When
         Page<Movie> result = movieRepository.findMovieByTitleContaining("jiji", pageable);
 
@@ -84,7 +83,7 @@ class MovieRepositoryTest {
 
     @Test
     @DisplayName("Should return empty page when title not found")
-    public void findMovieByTitleContaining_NotFound() {
+    void findMovieByTitleContaining_NotFound() {
         // When
         Page<Movie> result = movieRepository.findMovieByTitleContaining("asfdasdf", pageable);
 
@@ -94,38 +93,38 @@ class MovieRepositoryTest {
 
     @Test
     @DisplayName("Should save movie successfully")
-    public void shouldSaveMovieSuccessfully() {
+    void shouldSaveMovieSuccessfully() {
         // Given
         Movie newMovie = Movie.builder()
                 .title("Nueva peli")
                 .description("Otra descripcion")
                 .movieYear(2022)
                 .votes(0)
-                .rating(0)
+                .rating(0.0)
                 .build();
 
         // When
         Movie savedMovie = movieRepository.save(newMovie);
 
         // Then
-        assertNotNull(savedMovie.getId());
-        assertEquals("Nueva peli", savedMovie.getTitle());
+        assertThat(savedMovie.getId()).isNotNull();
+        assertThat(savedMovie.getTitle()).isEqualTo("Nueva peli");
 
-        // Verificar que realmente se guardó
+        // Verify it was actually saved
         Optional<Movie> found = movieRepository.findById(savedMovie.getId());
-        assertTrue(found.isPresent());
+        assertThat(found).isPresent();
     }
 
     @Test
     @DisplayName("Should delete movie successfully")
-    public void shouldDeleteMovieSuccessfully() {
+    void shouldDeleteMovieSuccessfully() {
         // Given
         Movie movie = Movie.builder()
                 .title("Borrar esta")
                 .description("Delete desc")
                 .movieYear(2010)
                 .votes(0)
-                .rating(0)
+                .rating(0.0)
                 .build();
 
         Movie saved = testEntityManager.persist(movie);
@@ -136,7 +135,7 @@ class MovieRepositoryTest {
 
         // Then
         Optional<Movie> deleted = movieRepository.findById(saved.getId());
-        assertTrue(deleted.isEmpty());
+        assertThat(deleted).isEmpty();
     }
 
     @Test
@@ -155,7 +154,7 @@ class MovieRepositoryTest {
                 .description("Explosions and stuff")
                 .movieYear(2010)
                 .votes(0)
-                .rating(0)
+                .rating(0.0)
                 .genres(List.of(action))
                 .build();
 
@@ -164,7 +163,7 @@ class MovieRepositoryTest {
                 .description("Funny and explosive")
                 .movieYear(2015)
                 .votes(0)
-                .rating(0)
+                .rating(0.0)
                 .genres(List.of(action, comedy))
                 .build();
 
@@ -173,7 +172,7 @@ class MovieRepositoryTest {
                 .description("No action here")
                 .movieYear(2018)
                 .votes(0)
-                .rating(0)
+                .rating(0.0)
                 .genres(List.of())
                 .build();
 
@@ -182,7 +181,7 @@ class MovieRepositoryTest {
         testEntityManager.persist(movie3);
         testEntityManager.flush();
 
-        // When - usando el mét_odo REAL del repositorio
+        // When
         Page<Movie> actionMovies = movieRepository.findAllByGenreName("Action", pageable);
 
         // Then
@@ -205,7 +204,7 @@ class MovieRepositoryTest {
                 .description("Desc")
                 .movieYear(2010)
                 .votes(0)
-                .rating(0)
+                .rating(0.0)
                 .genres(List.of(action))
                 .build();
         testEntityManager.persist(movie);
@@ -243,8 +242,8 @@ class MovieRepositoryTest {
 
         // Then
         assertThat(page1.getContent()).hasSize(10);
-        assertThat(page2.getContent()).hasSize(6); // Cambiado de 5 a 6 (16 total - 10 = 6)
-        assertThat(page1.getTotalElements()).isEqualTo(16); // 15 nuevas + 1 del setUp
+        assertThat(page2.getContent()).hasSize(6); // 16 total - 10 = 6
+        assertThat(page1.getTotalElements()).isEqualTo(16); // 15 + 1 from setUp
         assertThat(page1.getTotalPages()).isEqualTo(2);
     }
 
@@ -262,7 +261,7 @@ class MovieRepositoryTest {
 
         // Then
         Movie found = movieRepository.findById(updatedMovie.getId()).orElseThrow();
-        assertEquals("Título Actualizado", found.getTitle());
-        assertEquals("Descripción actualizada", found.getDescription());
+        assertThat(found.getTitle()).isEqualTo("Título Actualizado");
+        assertThat(found.getDescription()).isEqualTo("Descripción actualizada");
     }
 }
