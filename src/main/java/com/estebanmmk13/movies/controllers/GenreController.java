@@ -1,5 +1,6 @@
 package com.estebanmmk13.movies.controllers;
 
+import com.estebanmmk13.movies.dtoModels.GenreResponseDTO;
 import com.estebanmmk13.movies.error.dto.ResponseError;
 import com.estebanmmk13.movies.models.Genre;
 import com.estebanmmk13.movies.services.genre.GenreService;
@@ -37,7 +38,7 @@ public class GenreController {
     )
     @ApiResponse(responseCode = "200", description = "Genres retrieved successfully")
     @GetMapping
-    public ResponseEntity<Page<Genre>> findAllGenre(
+    public ResponseEntity<Page<GenreResponseDTO>> findAllGenre(
             @Parameter(description = "Pagination information") Pageable pageable) {
 
         return ResponseEntity.ok(genreService.findAllGenres(pageable));
@@ -59,7 +60,7 @@ public class GenreController {
             )
     })
     @GetMapping("/{id}")
-    public ResponseEntity<Genre> findGenreById(
+    public ResponseEntity<GenreResponseDTO> findGenreById(
             @Parameter(description = "ID of the genre to retrieve", required = true)
             @PathVariable Long id) {
 
@@ -135,7 +136,7 @@ public class GenreController {
             @ApiResponse(responseCode = "400", description = "Invalid name parameter")
     })
     @GetMapping("/name/{name}")
-    public ResponseEntity<Page<Genre>> findGenreByName(
+    public ResponseEntity<Page<GenreResponseDTO>> findGenreByName(
             @Parameter(description = "Name or partial name to search", required = true)
             @PathVariable String name,
             Pageable pageable) {

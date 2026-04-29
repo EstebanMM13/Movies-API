@@ -12,11 +12,11 @@ public class MovieResponseDTO {
     private int votes;
     private double rating;
     private String imageUrl;
-    private List<GenreDTO> genres;   // lista de géneros con id y nombre
+    private List<GenreResponseDTO> genres;   // lista de géneros con id y nombre
 
     // Constructor con todos los campos (para facilitar la creación)
     public MovieResponseDTO(Long id, String title, String description, int movieYear,
-                            int votes, double rating, String imageUrl, List<GenreDTO> genres) {
+                            int votes, double rating, String imageUrl, List<GenreResponseDTO> genres) {
         this.id = id;
         this.title = title;
         this.description = description;

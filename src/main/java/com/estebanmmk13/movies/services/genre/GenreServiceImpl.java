@@ -1,9 +1,10 @@
 package com.estebanmmk13.movies.services.genre;
 
+import com.estebanmmk13.movies.dtoModels.GenreResponseDTO;
 import com.estebanmmk13.movies.error.notFound.GenreNotFoundException;
+import com.estebanmmk13.movies.mapper.GenreMapper;
 import com.estebanmmk13.movies.models.Genre;
 import com.estebanmmk13.movies.repositories.GenreRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -14,18 +15,27 @@ public class GenreServiceImpl implements GenreService {
     private static final String NOT_FOUND_BY_ID = "Genre not found with id: %d";
     private static final String NOT_FOUND_BY_NAME = "Genre not found with name: %s";
 
-    @Autowired
-    private GenreRepository genreRepository; // Corregido el nombre del campo
+    private final GenreRepository genreRepository; // Corregido el nombre del campo
+    private final GenreMapper genreMapper;
 
-    @Override
-    public Page<Genre> findAllGenres(Pageable pageable) {
-        return genreRepository.findAll(pageable);
+    // Constructor injection
+    public GenreServiceImpl(GenreRepository genreRepository, GenreMapper genreMapper) {
+        this.genreRepository = genreRepository;
+        this.genreMapper = genreMapper;
     }
 
     @Override
-    public Genre findGenreById(Long id) {
-        return genreRepository.findById(id)
+    public Page<GenreResponseDTO> findAllGenres(Pageable pageable) {
+        return genreRepository.findAll(pageable)
+                .map(genreMapper::toResponseDTO);
+    }
+
+    @Override
+    public GenreResponseDTO findGenreById(Long id) {
+        Genre genre = genreRepository.findById(id)
                 .orElseThrow(() -> new GenreNotFoundException(String.format(NOT_FOUND_BY_ID, id)));
+        return genreMapper.toResponseDTO(genre);
+
     }
 
     @Override
@@ -61,18 +71,19 @@ public class GenreServiceImpl implements GenreService {
     }
 
     @Override
-    public Page<Genre> findGenreByName(String name, Pageable pageable) {
+    public Page<GenreResponseDTO> findGenreByName(String name, Pageable pageable) {
         if (name == null || name.trim().isEmpty()) {
             throw new IllegalArgumentException("Genre name cannot be empty");
         }
-        // Usamos el nuevo método del repositorio
-        return genreRepository.findByNameContainingIgnoreCase(name.trim(), pageable);
+        return genreRepository.findByNameContainingIgnoreCase(name.trim(), pageable)
+                .map(genreMapper::toResponseDTO);
     }
 
     // Método adicional útil para búsquedas exactas
     @Override
-    public Genre findGenreByExactName(String name) {
-        return genreRepository.findByNameIgnoreCase(name)
+    public GenreResponseDTO findGenreByExactName(String name) {
+        Genre genre = genreRepository.findByNameIgnoreCase(name)
                 .orElseThrow(() -> new GenreNotFoundException(String.format(NOT_FOUND_BY_NAME, name)));
+        return genreMapper.toResponseDTO(genre);
     }
 }

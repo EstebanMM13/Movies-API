@@ -1,6 +1,6 @@
 package com.estebanmmk13.movies.controllers;
 
-import com.estebanmmk13.movies.dtoModels.GenreDTO;
+import com.estebanmmk13.movies.dtoModels.GenreResponseDTO;
 import com.estebanmmk13.movies.dtoModels.MovieRequestDTO;
 import com.estebanmmk13.movies.dtoModels.MovieResponseDTO;
 import com.estebanmmk13.movies.error.notFound.MovieNotFoundException;
@@ -16,7 +16,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -61,7 +60,7 @@ class MovieControllerTest {
                 0,
                 0.0,
                 "http://imagen.com",
-                List.of(new GenreDTO(1L, "Acción"))
+                List.of(new GenreResponseDTO(1L, "Acción"))
         );
 
         updatedMovieResponseDTO = new MovieResponseDTO(
@@ -72,7 +71,7 @@ class MovieControllerTest {
                 5,
                 4.5,
                 "http://imagen.com",
-                List.of(new GenreDTO(1L, "Acción"), new GenreDTO(2L, "Comedia"))
+                List.of(new GenreResponseDTO(1L, "Acción"), new GenreResponseDTO(2L, "Comedia"))
         );
 
         movieRequestDTO = new MovieRequestDTO();
@@ -281,7 +280,7 @@ class MovieControllerTest {
     void voteMovie_ShouldReturnUpdatedMovieResponseDTO() throws Exception {
         MovieResponseDTO votedMovieDTO = new MovieResponseDTO(
                 1L, "Peli jiji", "Desc", 2000, 1, 5.0,
-                "http://imagen.com", List.of(new GenreDTO(1L, "Acción"))
+                "http://imagen.com", List.of(new GenreResponseDTO(1L, "Acción"))
         );
 
         when(movieService.voteMovie(1L, 1L, 5.0)).thenReturn(votedMovieDTO);

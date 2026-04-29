@@ -1,6 +1,8 @@
 package com.estebanmmk13.movies.services;
 
+import com.estebanmmk13.movies.dtoModels.GenreResponseDTO;
 import com.estebanmmk13.movies.error.notFound.GenreNotFoundException;
+import com.estebanmmk13.movies.mapper.GenreMapper;
 import com.estebanmmk13.movies.models.Genre;
 import com.estebanmmk13.movies.repositories.GenreRepository;
 import com.estebanmmk13.movies.services.genre.GenreService;
@@ -34,7 +36,11 @@ class GenreServiceTest {
     @MockitoBean
     private GenreRepository genreRepository;
 
+    @MockitoBean
+    private GenreMapper genreMapper;
+
     private Genre genre;
+    private GenreResponseDTO genreResponseDTO;
     private Pageable pageable;
     private Page<Genre> genrePage;
 
@@ -45,41 +51,51 @@ class GenreServiceTest {
                 .name("Acción")
                 .build();
 
+        genreResponseDTO = new GenreResponseDTO(1L, "Acción");
+
         pageable = PageRequest.of(0, 10);
         genrePage = new PageImpl<>(List.of(genre), pageable, 1);
     }
 
+    // ========== TESTS DE LECTURA (con DTOs) ==========
+
     @Test
-    @DisplayName("Debería devolver todos los géneros paginados")
-    void findAllGenres_ShouldReturnPageOfGenres() {
+    @DisplayName("Debería devolver todos los géneros paginados como DTOs")
+    void findAllGenres_ShouldReturnPageOfGenreResponseDTO() {
         // Given
         when(genreRepository.findAll(any(Pageable.class))).thenReturn(genrePage);
+        when(genreMapper.toResponseDTO(any(Genre.class))).thenReturn(genreResponseDTO);
 
         // When
-        Page<Genre> result = genreService.findAllGenres(pageable);
+        Page<GenreResponseDTO> result = genreService.findAllGenres(pageable);
 
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).getId()).isEqualTo(1L);
         assertThat(result.getContent().get(0).getName()).isEqualTo("Acción");
         assertThat(result.getTotalElements()).isEqualTo(1);
 
         verify(genreRepository).findAll(pageable);
+        verify(genreMapper, times(1)).toResponseDTO(genre);
     }
 
     @Test
-    @DisplayName("Debería devolver un género por ID cuando existe")
-    void findGenreById_WhenExists_ShouldReturnGenre() {
+    @DisplayName("Debería devolver un género como DTO cuando existe por ID")
+    void findGenreById_WhenExists_ShouldReturnGenreResponseDTO() {
         // Given
         when(genreRepository.findById(1L)).thenReturn(Optional.of(genre));
+        when(genreMapper.toResponseDTO(genre)).thenReturn(genreResponseDTO);
 
         // When
-        Genre result = genreService.findGenreById(1L);
+        GenreResponseDTO result = genreService.findGenreById(1L);
 
         // Then
         assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(1L);
         assertThat(result.getName()).isEqualTo("Acción");
         verify(genreRepository).findById(1L);
+        verify(genreMapper).toResponseDTO(genre);
     }
 
     @Test
@@ -94,7 +110,100 @@ class GenreServiceTest {
                 .hasMessageContaining("99");
 
         verify(genreRepository).findById(99L);
+        verify(genreMapper, never()).toResponseDTO(any());
     }
+
+    @Test
+    @DisplayName("Debería encontrar géneros por nombre (búsqueda parcial) y devolver DTOs")
+    void findGenreByName_ShouldReturnPageOfGenreResponseDTO() {
+        // Given
+        String searchTerm = "acc";
+        when(genreRepository.findByNameContainingIgnoreCase(eq(searchTerm), any(Pageable.class)))
+                .thenReturn(genrePage);
+        when(genreMapper.toResponseDTO(any(Genre.class))).thenReturn(genreResponseDTO);
+
+        // When
+        Page<GenreResponseDTO> result = genreService.findGenreByName(searchTerm, pageable);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).getName()).containsIgnoringCase(searchTerm);
+
+        verify(genreRepository).findByNameContainingIgnoreCase(searchTerm, pageable);
+        verify(genreMapper, times(1)).toResponseDTO(genre);
+    }
+
+    @Test
+    @DisplayName("Debería lanzar excepción al buscar con nombre vacío")
+    void findGenreByName_WithEmptyName_ShouldThrowException() {
+        // When & Then
+        assertThatThrownBy(() -> genreService.findGenreByName("", pageable))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("cannot be empty");
+
+        assertThatThrownBy(() -> genreService.findGenreByName("   ", pageable))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("cannot be empty");
+
+        verify(genreRepository, never()).findByNameContainingIgnoreCase(any(), any());
+        verify(genreMapper, never()).toResponseDTO(any());
+    }
+
+    @Test
+    @DisplayName("Debería devolver página vacía cuando no encuentra géneros por nombre")
+    void findGenreByName_WhenNoMatches_ShouldReturnEmptyPage() {
+        // Given
+        String searchTerm = "xyz";
+        Page<Genre> emptyPage = new PageImpl<>(List.of(), pageable, 0);
+        when(genreRepository.findByNameContainingIgnoreCase(eq(searchTerm), any(Pageable.class)))
+                .thenReturn(emptyPage);
+
+        // When
+        Page<GenreResponseDTO> result = genreService.findGenreByName(searchTerm, pageable);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getContent()).isEmpty();
+        assertThat(result.getTotalElements()).isZero();
+        verify(genreMapper, never()).toResponseDTO(any());
+    }
+
+    @Test
+    @DisplayName("Debería encontrar género por nombre exacto (ignore case) y devolver DTO")
+    void findGenreByExactName_WhenExists_ShouldReturnGenreResponseDTO() {
+        // Given
+        when(genreRepository.findByNameIgnoreCase("acción")).thenReturn(Optional.of(genre));
+        when(genreMapper.toResponseDTO(genre)).thenReturn(genreResponseDTO);
+
+        // When
+        GenreResponseDTO result = genreService.findGenreByExactName("acción");
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(1L);
+        assertThat(result.getName()).isEqualTo("Acción");
+
+        verify(genreRepository).findByNameIgnoreCase("acción");
+        verify(genreMapper).toResponseDTO(genre);
+    }
+
+    @Test
+    @DisplayName("Debería lanzar excepción si no encuentra género por nombre exacto")
+    void findGenreByExactName_WhenNotExists_ShouldThrowException() {
+        // Given
+        when(genreRepository.findByNameIgnoreCase("drama")).thenReturn(Optional.empty());
+
+        // When & Then
+        assertThatThrownBy(() -> genreService.findGenreByExactName("drama"))
+                .isInstanceOf(GenreNotFoundException.class)
+                .hasMessageContaining("drama");
+
+        verify(genreRepository).findByNameIgnoreCase("drama");
+        verify(genreMapper, never()).toResponseDTO(any());
+    }
+
+    // ========== TESTS DE ESCRITURA (sin cambios, devuelven entidad) ==========
 
     @Test
     @DisplayName("Debería crear un género correctamente")
@@ -113,6 +222,7 @@ class GenreServiceTest {
 
         verify(genreRepository).existsByNameIgnoreCase("Comedia");
         verify(genreRepository).save(newGenre);
+        verify(genreMapper, never()).toResponseDTO(any());
     }
 
     @Test
@@ -223,88 +333,6 @@ class GenreServiceTest {
     }
 
     @Test
-    @DisplayName("Debería encontrar géneros por nombre (búsqueda parcial)")
-    void findGenreByName_ShouldReturnPageOfGenres() {
-        // Given
-        String searchTerm = "acc";
-        when(genreRepository.findByNameContainingIgnoreCase(eq(searchTerm), any(Pageable.class)))
-                .thenReturn(genrePage);
-
-        // When
-        Page<Genre> result = genreService.findGenreByName(searchTerm, pageable);
-
-        // Then
-        assertThat(result).isNotNull();
-        assertThat(result.getContent()).hasSize(1);
-        assertThat(result.getContent().get(0).getName()).containsIgnoringCase(searchTerm);
-
-        verify(genreRepository).findByNameContainingIgnoreCase(searchTerm, pageable);
-    }
-
-    @Test
-    @DisplayName("Debería lanzar excepción al buscar con nombre vacío")
-    void findGenreByName_WithEmptyName_ShouldThrowException() {
-        // When & Then
-        assertThatThrownBy(() -> genreService.findGenreByName("", pageable))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("cannot be empty");
-
-        assertThatThrownBy(() -> genreService.findGenreByName("   ", pageable))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("cannot be empty");
-
-        verify(genreRepository, never()).findByNameContainingIgnoreCase(any(), any());
-    }
-
-    @Test
-    @DisplayName("Debería devolver página vacía cuando no encuentra géneros por nombre")
-    void findGenreByName_WhenNoMatches_ShouldReturnEmptyPage() {
-        // Given
-        String searchTerm = "xyz";
-        Page<Genre> emptyPage = new PageImpl<>(List.of(), pageable, 0);
-        when(genreRepository.findByNameContainingIgnoreCase(eq(searchTerm), any(Pageable.class)))
-                .thenReturn(emptyPage);
-
-        // When
-        Page<Genre> result = genreService.findGenreByName(searchTerm, pageable);
-
-        // Then
-        assertThat(result).isNotNull();
-        assertThat(result.getContent()).isEmpty();
-        assertThat(result.getTotalElements()).isZero();
-    }
-
-    @Test
-    @DisplayName("Debería encontrar género por nombre exacto (ignore case)")
-    void findGenreByExactName_WhenExists_ShouldReturnGenre() {
-        // Given
-        when(genreRepository.findByNameIgnoreCase("acción")).thenReturn(Optional.of(genre));
-
-        // When
-        Genre result = genreService.findGenreByExactName("acción");
-
-        // Then
-        assertThat(result).isNotNull();
-        assertThat(result.getName()).isEqualTo("Acción");
-
-        verify(genreRepository).findByNameIgnoreCase("acción");
-    }
-
-    @Test
-    @DisplayName("Debería lanzar excepción si no encuentra género por nombre exacto")
-    void findGenreByExactName_WhenNotExists_ShouldThrowException() {
-        // Given
-        when(genreRepository.findByNameIgnoreCase("drama")).thenReturn(Optional.empty());
-
-        // When & Then
-        assertThatThrownBy(() -> genreService.findGenreByExactName("drama"))
-                .isInstanceOf(GenreNotFoundException.class)
-                .hasMessageContaining("drama");
-
-        verify(genreRepository).findByNameIgnoreCase("drama");
-    }
-
-    @Test
     @DisplayName("Debería manejar correctamente la paginación")
     void shouldHandlePaginationCorrectly() {
         // Given
@@ -316,9 +344,13 @@ class GenreServiceTest {
         Page<Genre> pageWithThree = new PageImpl<>(manyGenres, pageable, 3);
 
         when(genreRepository.findAll(any(Pageable.class))).thenReturn(pageWithThree);
+        when(genreMapper.toResponseDTO(any(Genre.class)))
+                .thenReturn(genreResponseDTO)
+                .thenReturn(new GenreResponseDTO(2L, "Comedia"))
+                .thenReturn(new GenreResponseDTO(3L, "Drama"));
 
         // When
-        Page<Genre> result = genreService.findAllGenres(pageable);
+        Page<GenreResponseDTO> result = genreService.findAllGenres(pageable);
 
         // Then
         assertThat(result.getContent()).hasSize(3);

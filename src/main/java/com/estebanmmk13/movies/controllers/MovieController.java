@@ -2,13 +2,8 @@ package com.estebanmmk13.movies.controllers;
 
 import com.estebanmmk13.movies.dtoModels.MovieRequestDTO;
 import com.estebanmmk13.movies.dtoModels.MovieResponseDTO;
-import com.estebanmmk13.movies.error.dto.ResponseError;
-import com.estebanmmk13.movies.models.Movie;
 import com.estebanmmk13.movies.services.movie.MovieService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;

@@ -1,7 +1,7 @@
 package com.estebanmmk13.movies.services;
 
 
-import com.estebanmmk13.movies.dtoModels.GenreDTO;
+import com.estebanmmk13.movies.dtoModels.GenreResponseDTO;
 import com.estebanmmk13.movies.dtoModels.MovieRequestDTO;
 import com.estebanmmk13.movies.dtoModels.MovieResponseDTO;
 import com.estebanmmk13.movies.error.DuplicateVoteException;
@@ -98,7 +98,7 @@ class MovieServiceTest {
         movieResponseDTO = new MovieResponseDTO(
                 1L, "El retorno del rey", "Una descripción épica", 2003,
                 10, 4.5, "http://imagen.com",
-                List.of(new GenreDTO(1L, "Fantasía"))
+                List.of(new GenreResponseDTO(1L, "Fantasía"))
         );
     }
 
@@ -268,7 +268,7 @@ class MovieServiceTest {
                     m.getRating(),
                     m.getImageUrl(),
                     m.getGenres().stream()
-                            .map(g -> new GenreDTO(g.getId(), g.getName()))
+                            .map(g -> new GenreResponseDTO(g.getId(), g.getName()))
                             .collect(Collectors.toList())
             );
         });

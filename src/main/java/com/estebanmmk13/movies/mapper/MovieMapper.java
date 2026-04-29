@@ -1,12 +1,12 @@
 package com.estebanmmk13.movies.mapper;
 
 
-
-import com.estebanmmk13.movies.dtoModels.GenreDTO;
+import com.estebanmmk13.movies.dtoModels.GenreResponseDTO;
 import com.estebanmmk13.movies.dtoModels.MovieRequestDTO;
 import com.estebanmmk13.movies.dtoModels.MovieResponseDTO;
 import com.estebanmmk13.movies.models.Movie;
 import org.springframework.stereotype.Component;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,9 +18,9 @@ public class MovieMapper {
     public MovieResponseDTO toResponseDTO(Movie movie) {
         if (movie == null) return null;
 
-        List<GenreDTO> genreDTOs = movie.getGenres() == null ? new ArrayList<>() :
+        List<GenreResponseDTO> genreDTOs = movie.getGenres() == null ? new ArrayList<>() :
                 movie.getGenres().stream()
-                        .map(genre -> new GenreDTO(genre.getId(), genre.getName()))
+                        .map(genre -> new GenreResponseDTO(genre.getId(), genre.getName()))
                         .collect(Collectors.toList());
 
         return new MovieResponseDTO(
