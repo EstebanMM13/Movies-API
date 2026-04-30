@@ -1,6 +1,7 @@
 package com.estebanmmk13.movies.dtoModels.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,14 +13,22 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@Schema(description = "Review information returned to the client")
 public class ReviewResponseDTO {
+    @Schema(description = "Review ID", example = "10")
     private Long id;
+
+    @Schema(description = "Review comment", example = "This movie is amazing!")
     private String comment;
 
     @JsonFormat(pattern = "dd-MM-yyyy 'at' HH:mm")
+    @Schema(description = "Date and time of creation", example = "30-04-2025 at 12:34:56")
     private LocalDateTime createdAt;
 
-    private String username;
+    @Schema(description = "Username of the reviewer", example = "john_doe")
+    private String username;  // ← nombre del usuario
+
+    @Schema(description = "Title of the reviewed movie", example = "Inception")
     private String movieTitle;
 }
 

@@ -1,5 +1,7 @@
 package com.estebanmmk13.movies.controllers;
 
+import com.estebanmmk13.movies.dtoModels.request.UserRequestDTO;
+import com.estebanmmk13.movies.dtoModels.response.UserResponseDTO;
 import com.estebanmmk13.movies.error.dto.ResponseError;
 import com.estebanmmk13.movies.models.User;
 import com.estebanmmk13.movies.services.user.UserService;
@@ -36,13 +38,12 @@ public class UserController {
     )
     @ApiResponse(responseCode = "200", description = "Users retrieved successfully")
     @GetMapping
-    public ResponseEntity<Page<User>> findAllUsers(
+    public ResponseEntity<Page<UserResponseDTO>> findAllUsers(
             @Parameter(description = "Pagination information")
             Pageable pageable) {
 
         return ResponseEntity.ok(userService.findAllUsers(pageable));
     }
-
 
     // GET USER BY ID
     @Operation(summary = "Get user by ID")
@@ -53,13 +54,12 @@ public class UserController {
                     content = @Content(schema = @Schema(implementation = ResponseError.class)))
     })
     @GetMapping("/{id}")
-    public ResponseEntity<User> findUserById(
+    public ResponseEntity<UserResponseDTO> findUserById(
             @Parameter(description = "User ID", required = true)
             @PathVariable Long id) {
 
         return ResponseEntity.ok(userService.findUserById(id));
     }
-
 
     // CREATE USER
     @Operation(summary = "Create a new user")
@@ -72,14 +72,11 @@ public class UserController {
                     content = @Content(schema = @Schema(implementation = ResponseError.class)))
     })
     @PostMapping
-    public ResponseEntity<User> createUser(
+    public ResponseEntity<UserResponseDTO> createUser(
             @Parameter(description = "User object to create", required = true)
-            @Valid @RequestBody User user) {
-
-        User createdUser = userService.createUser(user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
+            @Valid @RequestBody UserRequestDTO userRequestDTO) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(userRequestDTO));
     }
-
 
     // UPDATE USER
     @Operation(summary = "Update an existing user")
@@ -89,13 +86,13 @@ public class UserController {
             @ApiResponse(responseCode = "400", description = "Validation error")
     })
     @PatchMapping("/{id}")
-    public ResponseEntity<User> updateUser(
+    public ResponseEntity<UserResponseDTO> updateUser(
             @Parameter(description = "User ID", required = true)
             @PathVariable Long id,
             @Parameter(description = "User fields to update", required = true)
-            @Valid @RequestBody User user) {
+            @Valid @RequestBody UserRequestDTO userRequestDTO) {
 
-        return ResponseEntity.ok(userService.updateUser(id, user));
+        return ResponseEntity.ok(userService.updateUser(id, userRequestDTO));
     }
 
 
@@ -125,7 +122,7 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "User not found")
     })
     @GetMapping("/username/{username}")
-    public ResponseEntity<User> findUserByUsername(
+    public ResponseEntity<UserResponseDTO> findUserByUsername(
             @Parameter(description = "Username", required = true)
             @PathVariable String username) {
 
@@ -142,7 +139,7 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "User not found")
     })
     @GetMapping("/email/{email}")
-    public ResponseEntity<User> findUserByEmail(
+    public ResponseEntity<UserResponseDTO> findUserByEmail(
             @Parameter(description = "Email", required = true)
             @PathVariable String email) {
 

@@ -1,8 +1,8 @@
 package com.estebanmmk13.movies.controllers;
 
-import com.estebanmmk13.movies.models.AuthResponse;
-import com.estebanmmk13.movies.models.AuthenticationRequest;
-import com.estebanmmk13.movies.models.RegisterRequest;
+import com.estebanmmk13.movies.dtoModels.response.AuthResponse;
+import com.estebanmmk13.movies.dtoModels.request.AuthenticationRequest;
+import com.estebanmmk13.movies.dtoModels.request.RegisterRequest;
 import com.estebanmmk13.movies.services.auth.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

@@ -23,6 +23,11 @@ management:
         http.server:
           requests: true
 
+# Configuración JWT (disponible para todos los perfiles)
+jwt:
+  secret: ${JWT_SECRET:2da08e8ee264a149413ce46abebbd566b4c8bbb019b37708ed9d77f8511ac7bf}
+  expiration: 86400000
+
 ---
 
 spring:
@@ -46,6 +51,7 @@ spring:
     show-sql: true
 
 ---
+
 spring:
   config:
     activate:
@@ -67,6 +73,7 @@ spring:
     show-sql: true
 
 ---
+
 spring:
   config:
     activate:
@@ -88,6 +95,7 @@ spring:
     show-sql: true
 
 ---
+
 spring:
   config:
     activate:

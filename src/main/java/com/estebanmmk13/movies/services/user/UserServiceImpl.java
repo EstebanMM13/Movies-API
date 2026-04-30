@@ -1,67 +1,80 @@
 package com.estebanmmk13.movies.services.user;
 
+import com.estebanmmk13.movies.dtoModels.request.UserRequestDTO;
+import com.estebanmmk13.movies.dtoModels.response.UserResponseDTO;
 import com.estebanmmk13.movies.error.notFound.MovieNotFoundException;
 import com.estebanmmk13.movies.error.notFound.UserNotFoundException;
+import com.estebanmmk13.movies.mapper.UserMapper;
 import com.estebanmmk13.movies.models.User;
 import com.estebanmmk13.movies.repositories.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 import static com.estebanmmk13.movies.error.notFound.UserNotFoundException.*;
 
 @Service
 public class UserServiceImpl implements UserService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
-    @Override
-    public Page<User> findAllUsers(Pageable pageable) {return userRepository.findAll(pageable);}
-
-    @Override
-    public User findUserById(Long id) {
-
-        return userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException(String.format(NOT_FOUND_BY_ID,id)));
+    public UserServiceImpl(UserRepository userRepository, UserMapper userMapper) {
+        this.userRepository = userRepository;
+        this.userMapper = userMapper;
     }
 
     @Override
-    public User createUser(User user) {return userRepository.save(user);}
+    public Page<UserResponseDTO> findAllUsers(Pageable pageable) {
+        return userRepository.findAll(pageable)
+                .map(userMapper::toResponseDTO);
+    }
 
     @Override
-    public User updateUser(Long id, User user) {
+    public UserResponseDTO findUserById(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException(String.format(NOT_FOUND_BY_ID, id)));
+        return userMapper.toResponseDTO(user);
+    }
 
+    @Override
+    public UserResponseDTO createUser(UserRequestDTO userRequestDTO) {
+        User user = userMapper.toEntity(userRequestDTO);
+        // Encriptar contraseña aquí si no lo hace un listener
+        User saved = userRepository.save(user);
+        return userMapper.toResponseDTO(saved);
+    }
+
+    @Override
+    public UserResponseDTO updateUser(Long id, UserRequestDTO userRequestDTO) {
         User existingUser = userRepository.findById(id)
-                        .orElseThrow(() -> new UserNotFoundException(String.format(NOT_FOUND_BY_ID,id)));
-
-        user.setId(id);
-        return userRepository.save(user);
+                .orElseThrow(() -> new UserNotFoundException(String.format(NOT_FOUND_BY_ID, id)));
+        userMapper.updateEntity(existingUser, userRequestDTO);
+        User updated = userRepository.save(existingUser);
+        return userMapper.toResponseDTO(updated);
     }
 
     @Override
     public void deleteUser(Long id) {
-
         if (!userRepository.existsById(id)) {
-            throw new MovieNotFoundException(String.format(NOT_FOUND_BY_ID,id));
+            throw new MovieNotFoundException(String.format(NOT_FOUND_BY_ID, id));
         }
         userRepository.deleteById(id);
     }
 
 
     @Override
-    public User findUserByUsernameIgnoreCase(String username) {
-        return userRepository.findUserByUsernameIgnoreCaseContaining(username)
-                .orElseThrow(() -> new UserNotFoundException(String.format(NOT_FOUND_BY_USERNAME,username)));
+    public UserResponseDTO findUserByUsernameIgnoreCase(String username) {
+        User user = userRepository.findUserByUsernameIgnoreCaseContaining(username)
+                .orElseThrow(() -> new UserNotFoundException(String.format(NOT_FOUND_BY_USERNAME, username)));
+        return userMapper.toResponseDTO(user);
     }
 
     @Override
-    public User findUserByEmail(String email) {
-        return userRepository.findUserByEmail(email)
-                .orElseThrow(() -> new UserNotFoundException(String.format(NOT_FOUND_BY_EMAIL,email)));
+    public UserResponseDTO findUserByEmail(String email) {
+        User user = userRepository.findUserByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException(String.format(NOT_FOUND_BY_EMAIL, email)));
+        return userMapper.toResponseDTO(user);
     }
 
     @Override

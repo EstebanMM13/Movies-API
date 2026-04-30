@@ -1,6 +1,9 @@
 package com.estebanmmk13.movies.services.auth;
 
 import com.estebanmmk13.movies.config.JwtService;
+import com.estebanmmk13.movies.dtoModels.request.AuthenticationRequest;
+import com.estebanmmk13.movies.dtoModels.request.RegisterRequest;
+import com.estebanmmk13.movies.dtoModels.response.AuthResponse;
 import com.estebanmmk13.movies.error.DuplicateResourceException;
 import com.estebanmmk13.movies.error.InvalidCredentialsException;
 import com.estebanmmk13.movies.error.ResourceNotFoundException;
