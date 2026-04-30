@@ -1,9 +1,9 @@
 package com.estebanmmk13.movies.controllers;
 
-import com.estebanmmk13.movies.config.ReviewMapper;
+import com.estebanmmk13.movies.dtoModels.request.ReviewRequestDTO;
+import com.estebanmmk13.movies.dtoModels.response.ReviewResponseDTO;
 import com.estebanmmk13.movies.error.dto.ResponseError;
-import com.estebanmmk13.movies.models.Review;
-import com.estebanmmk13.movies.modelsRest.ReviewRest;
+import com.estebanmmk13.movies.models.User;
 import com.estebanmmk13.movies.services.review.ReviewService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -17,6 +17,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -26,12 +28,9 @@ import org.springframework.web.bind.annotation.*;
 public class ReviewController {
 
     private final ReviewService reviewService;
-    private final ReviewMapper reviewMapper;
 
-    public ReviewController(ReviewService reviewService,
-                            ReviewMapper reviewMapper) {
+    public ReviewController(ReviewService reviewService) {
         this.reviewService = reviewService;
-        this.reviewMapper = reviewMapper;
     }
 
     // GET REVIEWS BY MOVIE
@@ -45,36 +44,30 @@ public class ReviewController {
                     content = @Content(schema = @Schema(implementation = ResponseError.class)))
     })
     @GetMapping
-    public ResponseEntity<Page<ReviewRest>> findReviewsByMovie(
+    public ResponseEntity<Page<ReviewResponseDTO>> findReviewsByMovie(
             @Parameter(description = "Movie ID", required = true)
             @PathVariable Long movieId,
             @Parameter(description = "Pagination information")
             Pageable pageable) {
 
-        Page<Review> reviewsPage = reviewService.findReviewsByMovieId(movieId, pageable);
-        Page<ReviewRest> reviewsRestPage = reviewsPage.map(reviewMapper::toRest);
-
-        return ResponseEntity.ok(reviewsRestPage);
+        return ResponseEntity.ok(reviewService.findReviewsByMovieId(movieId, pageable));
     }
-
 
     // GET REVIEW BY ID
     @Operation(summary = "Find review by ID")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Review found",
-                    content = @Content(schema = @Schema(implementation = ReviewRest.class))),
+                    content = @Content(schema = @Schema(implementation = ReviewResponseDTO.class))),
             @ApiResponse(responseCode = "404", description = "Review not found",
                     content = @Content(schema = @Schema(implementation = ResponseError.class)))
     })
     @GetMapping("/{id}")
-    public ResponseEntity<ReviewRest> findReviewById(
+    public ResponseEntity<ReviewResponseDTO> findReviewById(
             @Parameter(description = "Review ID", required = true)
             @PathVariable Long id) {
 
-        Review review = reviewService.findReviewById(id);
-        return ResponseEntity.ok(reviewMapper.toRest(review));
+        return ResponseEntity.ok(reviewService.findReviewById(id));
     }
-
 
     // CREATE REVIEW
     @Operation(
@@ -83,30 +76,20 @@ public class ReviewController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Review created successfully",
-                    content = @Content(schema = @Schema(implementation = ReviewRest.class))),
+                    content = @Content(schema = @Schema(implementation = ReviewResponseDTO.class))),
             @ApiResponse(responseCode = "400", description = "Invalid review data",
                     content = @Content(schema = @Schema(implementation = ResponseError.class))),
             @ApiResponse(responseCode = "404", description = "Movie or user not found",
                     content = @Content(schema = @Schema(implementation = ResponseError.class)))
     })
     @PostMapping
-    public ResponseEntity<ReviewRest> createReview(
-            @Parameter(description = "Movie ID", required = true)
+    public ResponseEntity<ReviewResponseDTO> createReview(
             @PathVariable Long movieId,
-            @Parameter(description = "Review data", required = true)
-            @Valid @RequestBody ReviewRest dtoReview) {
-
-        Review review = reviewService.createReview(
-                dtoReview.getUserId(),
-                movieId,
-                dtoReview.getComment()
-        );
-
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(reviewMapper.toRest(review));
+            @Valid @RequestBody ReviewRequestDTO dto,
+            @RequestParam Long userId) {   // ← ADDED
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(reviewService.createReview(userId, movieId, dto));
     }
-
 
     // UPDATE REVIEW
     @Operation(
@@ -119,19 +102,12 @@ public class ReviewController {
             @ApiResponse(responseCode = "400", description = "Invalid review data")
     })
     @PatchMapping("/{id}")
-    public ResponseEntity<ReviewRest> updateReview(
-            @Parameter(description = "Review ID", required = true)
+    public ResponseEntity<ReviewResponseDTO> updateReview(
+            @PathVariable Long movieId,
             @PathVariable Long id,
-            @Parameter(description = "Updated review data", required = true)
-            @Valid @RequestBody ReviewRest dto) {
-
-        Review updatedReview = reviewService.updateReview(
-                id,
-                dto.getUserId(),
-                dto.getComment()
-        );
-
-        return ResponseEntity.ok(reviewMapper.toRest(updatedReview));
+            @Valid @RequestBody ReviewRequestDTO dto,
+            @RequestParam Long userId) {   // ← ADDED
+        return ResponseEntity.ok(reviewService.updateReview(id, userId, dto));
     }
 
 
@@ -147,11 +123,9 @@ public class ReviewController {
     })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteReview(
-            @Parameter(description = "Review ID", required = true)
+            @PathVariable Long movieId,
             @PathVariable Long id,
-            @Parameter(description = "Owner user ID", required = true)
-            @RequestParam Long userId) {
-
+            @RequestParam Long userId) {   // ← ADDED
         reviewService.deleteReview(id, userId);
         return ResponseEntity.noContent().build();
     }

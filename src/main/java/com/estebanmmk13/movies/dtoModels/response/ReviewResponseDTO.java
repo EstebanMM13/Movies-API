@@ -1,4 +1,4 @@
-package com.estebanmmk13.movies.modelsRest;
+package com.estebanmmk13.movies.dtoModels.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
@@ -12,13 +12,14 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ReviewRest {
+public class ReviewResponseDTO {
     private Long id;
     private String comment;
-    private Long userId;
-    private Long movieId;
 
     @JsonFormat(pattern = "dd-MM-yyyy 'at' HH:mm")
     private LocalDateTime createdAt;
+
+    private String username;
+    private String movieTitle;
 }
 

@@ -1,7 +1,7 @@
 package com.estebanmmk13.movies.services.movie;
 
-import com.estebanmmk13.movies.dtoModels.MovieRequestDTO;
-import com.estebanmmk13.movies.dtoModels.MovieResponseDTO;
+import com.estebanmmk13.movies.dtoModels.request.MovieRequestDTO;
+import com.estebanmmk13.movies.dtoModels.response.MovieResponseDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

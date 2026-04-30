@@ -1,9 +1,9 @@
 package com.estebanmmk13.movies.services;
 
 
-import com.estebanmmk13.movies.dtoModels.GenreResponseDTO;
-import com.estebanmmk13.movies.dtoModels.MovieRequestDTO;
-import com.estebanmmk13.movies.dtoModels.MovieResponseDTO;
+import com.estebanmmk13.movies.dtoModels.response.GenreResponseDTO;
+import com.estebanmmk13.movies.dtoModels.request.MovieRequestDTO;
+import com.estebanmmk13.movies.dtoModels.response.MovieResponseDTO;
 import com.estebanmmk13.movies.error.DuplicateVoteException;
 import com.estebanmmk13.movies.error.notFound.MovieNotFoundException;
 import com.estebanmmk13.movies.error.notFound.UserNotFoundException;

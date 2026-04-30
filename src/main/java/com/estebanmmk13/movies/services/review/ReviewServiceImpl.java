@@ -1,49 +1,60 @@
 package com.estebanmmk13.movies.services.review;
 
+import com.estebanmmk13.movies.dtoModels.request.ReviewRequestDTO;
+import com.estebanmmk13.movies.dtoModels.response.ReviewResponseDTO;
 import com.estebanmmk13.movies.error.notFound.MovieNotFoundException;
 import com.estebanmmk13.movies.error.notFound.ReviewNotFoundException;
 import com.estebanmmk13.movies.error.notFound.UserNotFoundException;
+import com.estebanmmk13.movies.mapper.ReviewMapper;
 import com.estebanmmk13.movies.models.Movie;
 import com.estebanmmk13.movies.models.Review;
 import com.estebanmmk13.movies.models.User;
 import com.estebanmmk13.movies.repositories.MovieRepository;
 import com.estebanmmk13.movies.repositories.ReviewRepository;
 import com.estebanmmk13.movies.repositories.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.estebanmmk13.movies.error.notFound.ReviewNotFoundException.NOT_ACCES;
 
 @Service
 public class ReviewServiceImpl implements ReviewService {
 
-    @Autowired
-    ReviewRepository reviewRepository;
+    private final ReviewRepository reviewRepository;
+    private final UserRepository userRepository;
+    private final MovieRepository movieRepository;
+    private final ReviewMapper reviewMapper;
 
-    @Autowired
-    UserRepository userRepository;
-
-    @Autowired
-    MovieRepository movieRepository;
-
-    @Override
-    public List<Review> findAllReviews() {
-        return reviewRepository.findAll();
+    public ReviewServiceImpl(ReviewRepository reviewRepository,
+                             UserRepository userRepository,
+                             MovieRepository movieRepository,
+                             ReviewMapper reviewMapper) {
+        this.reviewRepository = reviewRepository;
+        this.userRepository = userRepository;
+        this.movieRepository = movieRepository;
+        this.reviewMapper = reviewMapper;
     }
 
     @Override
-    public Review findReviewById(Long id) {
-        return reviewRepository.findById(id)
+    public List<ReviewResponseDTO> findAllReviews() {
+        return reviewRepository.findAll()
+                .stream().map(reviewMapper::toResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public ReviewResponseDTO findReviewById(Long id) {
+        Review review = reviewRepository.findById(id)
                 .orElseThrow(() -> new ReviewNotFoundException(String.format(ReviewNotFoundException.NOT_FOUND_BY_ID, id)));
+        return reviewMapper.toResponseDTO(review);
     }
 
     @Override
-    public Review createReview(Long userId, Long movieId, String comment) {
+    public ReviewResponseDTO createReview(Long userId, Long movieId, ReviewRequestDTO dto) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(String.format(UserNotFoundException.NOT_FOUND_BY_ID, userId)));
         Movie movie = movieRepository.findById(movieId)
@@ -53,18 +64,13 @@ public class ReviewServiceImpl implements ReviewService {
             throw new RuntimeException("User already submitted a review for this movie");
         }
 
-        Review review = Review.builder()
-                .user(user)
-                .movie(movie)
-                .comment(comment)
-                .createdAt(LocalDateTime.now())
-                .build();
-
-        return reviewRepository.save(review);
+        Review review = reviewMapper.toEntity(dto, user, movie);
+        Review saved = reviewRepository.save(review);
+        return reviewMapper.toResponseDTO(saved);
     }
 
     @Override
-    public Review updateReview(Long id, Long userId, String comment) {
+    public ReviewResponseDTO updateReview(Long id, Long userId, ReviewRequestDTO dto) {
         Review review = reviewRepository.findById(id)
                 .orElseThrow(() -> new ReviewNotFoundException(String.format(ReviewNotFoundException.NOT_FOUND_BY_ID, id)));
 
@@ -72,8 +78,9 @@ public class ReviewServiceImpl implements ReviewService {
             throw new ReviewNotFoundException(NOT_ACCES);
         }
 
-        review.setComment(comment);
-        return reviewRepository.save(review);
+        review.setComment(dto.getComment());
+        Review updated = reviewRepository.save(review);
+        return reviewMapper.toResponseDTO(updated);
     }
 
 
@@ -91,12 +98,12 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    public Page<Review> findReviewsByMovieId(Long movieId, Pageable pageable) {
-        return reviewRepository.findReviewsByMovieId(movieId, pageable);
+    public Page<ReviewResponseDTO> findReviewsByMovieId(Long movieId, Pageable pageable) {
+        return reviewRepository.findReviewsByMovieId(movieId, pageable).map(reviewMapper::toResponseDTO);
     }
 
     @Override
-    public Page<Review> findReviewsByUserId(Long userId, Pageable pageable) {
-        return reviewRepository.findReviewsByUserId(userId, pageable);
+    public Page<ReviewResponseDTO> findReviewsByUserId(Long userId, Pageable pageable) {
+        return reviewRepository.findReviewsByUserId(userId, pageable).map(reviewMapper::toResponseDTO);
     }
 }

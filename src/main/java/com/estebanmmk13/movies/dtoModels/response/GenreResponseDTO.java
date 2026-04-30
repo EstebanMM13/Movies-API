@@ -1,4 +1,4 @@
-package com.estebanmmk13.movies.dtoModels;
+package com.estebanmmk13.movies.dtoModels.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

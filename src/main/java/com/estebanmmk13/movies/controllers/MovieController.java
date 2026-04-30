@@ -1,7 +1,7 @@
 package com.estebanmmk13.movies.controllers;
 
-import com.estebanmmk13.movies.dtoModels.MovieRequestDTO;
-import com.estebanmmk13.movies.dtoModels.MovieResponseDTO;
+import com.estebanmmk13.movies.dtoModels.request.MovieRequestDTO;
+import com.estebanmmk13.movies.dtoModels.response.MovieResponseDTO;
 import com.estebanmmk13.movies.services.movie.MovieService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

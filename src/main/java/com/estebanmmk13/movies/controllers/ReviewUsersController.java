@@ -1,9 +1,9 @@
 package com.estebanmmk13.movies.controllers;
 
-import com.estebanmmk13.movies.config.ReviewMapper;
+import com.estebanmmk13.movies.mapper.ReviewMapper;
 import com.estebanmmk13.movies.error.dto.ResponseError;
 import com.estebanmmk13.movies.models.Review;
-import com.estebanmmk13.movies.modelsRest.ReviewRest;
+import com.estebanmmk13.movies.dtoModels.response.ReviewResponseDTO;
 import com.estebanmmk13.movies.services.review.ReviewService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -47,20 +47,17 @@ public class ReviewUsersController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Reviews retrieved successfully",
-                    content = @Content(schema = @Schema(implementation = ReviewRest.class))),
+                    content = @Content(schema = @Schema(implementation = ReviewResponseDTO.class))),
             @ApiResponse(responseCode = "404", description = "User not found",
                     content = @Content(schema = @Schema(implementation = ResponseError.class)))
     })
     @GetMapping
-    public ResponseEntity<Page<ReviewRest>> findReviewsByUser(
+    public ResponseEntity<Page<ReviewResponseDTO>> findReviewsByUser(
             @Parameter(description = "User ID", required = true)
             @PathVariable Long userId,
             @Parameter(description = "Pagination information")
             Pageable pageable) {
 
-        Page<Review> reviewsPage = reviewService.findReviewsByUserId(userId, pageable);
-        Page<ReviewRest> reviewsRestPage = reviewsPage.map(reviewMapper::toRest);
-
-        return ResponseEntity.ok(reviewsRestPage);
+        return ResponseEntity.ok(reviewService.findReviewsByUserId(userId, pageable));
     }
 }

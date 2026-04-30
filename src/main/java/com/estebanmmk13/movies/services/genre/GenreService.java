@@ -1,6 +1,6 @@
 package com.estebanmmk13.movies.services.genre;
 
-import com.estebanmmk13.movies.dtoModels.GenreResponseDTO;
+import com.estebanmmk13.movies.dtoModels.response.GenreResponseDTO;
 import com.estebanmmk13.movies.models.Genre;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

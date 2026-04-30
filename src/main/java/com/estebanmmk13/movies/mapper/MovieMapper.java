@@ -1,9 +1,9 @@
 package com.estebanmmk13.movies.mapper;
 
 
-import com.estebanmmk13.movies.dtoModels.GenreResponseDTO;
-import com.estebanmmk13.movies.dtoModels.MovieRequestDTO;
-import com.estebanmmk13.movies.dtoModels.MovieResponseDTO;
+import com.estebanmmk13.movies.dtoModels.response.GenreResponseDTO;
+import com.estebanmmk13.movies.dtoModels.request.MovieRequestDTO;
+import com.estebanmmk13.movies.dtoModels.response.MovieResponseDTO;
 import com.estebanmmk13.movies.models.Movie;
 import org.springframework.stereotype.Component;
 

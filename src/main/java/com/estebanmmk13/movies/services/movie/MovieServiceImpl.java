@@ -1,7 +1,7 @@
 package com.estebanmmk13.movies.services.movie;
 
-import com.estebanmmk13.movies.dtoModels.MovieRequestDTO;
-import com.estebanmmk13.movies.dtoModels.MovieResponseDTO;
+import com.estebanmmk13.movies.dtoModels.request.MovieRequestDTO;
+import com.estebanmmk13.movies.dtoModels.response.MovieResponseDTO;
 import com.estebanmmk13.movies.error.DuplicateVoteException;
 import com.estebanmmk13.movies.error.notFound.MovieNotFoundException;
 import com.estebanmmk13.movies.error.notFound.UserNotFoundException;
@@ -15,7 +15,6 @@ import com.estebanmmk13.movies.repositories.MovieRepository;
 import com.estebanmmk13.movies.repositories.UserRepository;
 import com.estebanmmk13.movies.repositories.VoteRepository;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -23,8 +22,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.estebanmmk13.movies.error.notFound.MovieNotFoundException.*;
 
 @Service
 @Transactional

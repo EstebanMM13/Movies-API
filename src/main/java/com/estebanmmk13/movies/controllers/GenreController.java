@@ -1,6 +1,6 @@
 package com.estebanmmk13.movies.controllers;
 
-import com.estebanmmk13.movies.dtoModels.GenreResponseDTO;
+import com.estebanmmk13.movies.dtoModels.response.GenreResponseDTO;
 import com.estebanmmk13.movies.error.dto.ResponseError;
 import com.estebanmmk13.movies.models.Genre;
 import com.estebanmmk13.movies.services.genre.GenreService;
@@ -29,7 +29,6 @@ public class GenreController {
     public GenreController(GenreService genreService) {
         this.genreService = genreService;
     }
-
 
     // GET ALL GENRES
     @Operation(

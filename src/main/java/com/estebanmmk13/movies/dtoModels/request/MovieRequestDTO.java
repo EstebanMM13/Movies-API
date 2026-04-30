@@ -1,4 +1,4 @@
-package com.estebanmmk13.movies.dtoModels;
+package com.estebanmmk13.movies.dtoModels.request;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;

@@ -1,6 +1,8 @@
 package com.estebanmmk13.movies.services.review;
 
 
+import com.estebanmmk13.movies.dtoModels.request.ReviewRequestDTO;
+import com.estebanmmk13.movies.dtoModels.response.ReviewResponseDTO;
 import com.estebanmmk13.movies.models.Review;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -9,18 +11,18 @@ import java.util.List;
 
 public interface ReviewService {
 
-    List<Review> findAllReviews();
+    List<ReviewResponseDTO> findAllReviews();
 
-    Review findReviewById(Long id);
+    ReviewResponseDTO findReviewById(Long id);
 
-    Review createReview(Long userId, Long movieId, String comment);
+    ReviewResponseDTO createReview(Long userId, Long movieId, ReviewRequestDTO dto);
 
-    Review updateReview(Long id, Long userId, String comment);
+    ReviewResponseDTO updateReview(Long id, Long userId, ReviewRequestDTO dto);
 
     void deleteReview(Long reviewId,Long userId);
 
-    Page<Review> findReviewsByMovieId(Long movieId, Pageable pageable);
+    Page<ReviewResponseDTO> findReviewsByMovieId(Long movieId, Pageable pageable);
 
-    Page<Review> findReviewsByUserId(Long userId, Pageable pageable);
+    Page<ReviewResponseDTO> findReviewsByUserId(Long userId, Pageable pageable);
 
 }

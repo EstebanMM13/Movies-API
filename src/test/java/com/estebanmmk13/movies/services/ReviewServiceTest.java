@@ -1,26 +1,29 @@
 package com.estebanmmk13.movies.services;
 
+import com.estebanmmk13.movies.dtoModels.request.ReviewRequestDTO;
+import com.estebanmmk13.movies.dtoModels.response.ReviewResponseDTO;
 import com.estebanmmk13.movies.error.notFound.MovieNotFoundException;
 import com.estebanmmk13.movies.error.notFound.ReviewNotFoundException;
 import com.estebanmmk13.movies.error.notFound.UserNotFoundException;
+import com.estebanmmk13.movies.mapper.ReviewMapper;
 import com.estebanmmk13.movies.models.Movie;
 import com.estebanmmk13.movies.models.Review;
 import com.estebanmmk13.movies.models.User;
 import com.estebanmmk13.movies.repositories.MovieRepository;
 import com.estebanmmk13.movies.repositories.ReviewRepository;
 import com.estebanmmk13.movies.repositories.UserRepository;
-import com.estebanmmk13.movies.services.review.ReviewService;
+import com.estebanmmk13.movies.services.review.ReviewServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,26 +34,30 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-@SpringBootTest
-@ActiveProfiles("test")
+@ExtendWith(MockitoExtension.class)
 class ReviewServiceTest {
 
-    @Autowired
-    private ReviewService reviewService;
-
-    @MockitoBean
+    @Mock
     private ReviewRepository reviewRepository;
 
-    @MockitoBean
+    @Mock
     private UserRepository userRepository;
 
-    @MockitoBean
+    @Mock
     private MovieRepository movieRepository;
+
+    @Mock
+    private ReviewMapper reviewMapper;
+
+    @InjectMocks
+    private ReviewServiceImpl reviewService;
 
     private User user;
     private User otroUser;
     private Movie movie;
     private Review review;
+    private ReviewRequestDTO reviewRequestDTO;
+    private ReviewResponseDTO reviewResponseDTO;
     private Pageable pageable;
     private Page<Review> reviewPage;
 
@@ -76,7 +83,7 @@ class ReviewServiceTest {
                 .description("Una peli potente")
                 .movieYear(2020)
                 .votes(0)
-                .rating(0)
+                .rating(0.0)
                 .build();
 
         review = Review.builder()
@@ -87,33 +94,47 @@ class ReviewServiceTest {
                 .createdAt(LocalDateTime.now())
                 .build();
 
+        reviewRequestDTO = new ReviewRequestDTO();
+        reviewRequestDTO.setComment("Muy buena");
+
+        reviewResponseDTO = new ReviewResponseDTO(
+                1L,
+                "Muy buena",
+                LocalDateTime.now(),
+                "Esteban",
+                "Peli épica"
+        );
+
         pageable = PageRequest.of(0, 10);
         reviewPage = new PageImpl<>(List.of(review), pageable, 1);
     }
 
+    // ========== CREATE REVIEW ==========
+
     @Test
-    @DisplayName("Debería crear una review correctamente")
-    void createReview_ShouldCreateAndReturnReview() {
+    @DisplayName("Debería crear una review correctamente y devolver DTO")
+    void createReview_ShouldCreateAndReturnReviewResponseDTO() {
         // Given
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(movieRepository.findById(1L)).thenReturn(Optional.of(movie));
         when(reviewRepository.existsByUserIdAndMovieId(1L, 1L)).thenReturn(false);
-        when(reviewRepository.save(any(Review.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(reviewMapper.toEntity(eq(reviewRequestDTO), eq(user), eq(movie))).thenReturn(review);
+        when(reviewRepository.save(any(Review.class))).thenReturn(review);
+        when(reviewMapper.toResponseDTO(review)).thenReturn(reviewResponseDTO);
 
         // When
-        Review result = reviewService.createReview(1L, 1L, "Muy buena");
+        ReviewResponseDTO result = reviewService.createReview(1L, 1L, reviewRequestDTO);
 
         // Then
         assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(1L);
         assertThat(result.getComment()).isEqualTo("Muy buena");
-        assertThat(result.getUser().getId()).isEqualTo(user.getId());
-        assertThat(result.getMovie().getId()).isEqualTo(movie.getId());
+        assertThat(result.getUsername()).isEqualTo("Esteban");
+        assertThat(result.getMovieTitle()).isEqualTo("Peli épica");
 
-        verify(reviewRepository).save(argThat(review ->
-                review.getComment().equals("Muy buena") &&
-                        review.getUser().equals(user) &&
-                        review.getMovie().equals(movie)
-        ));
+        verify(reviewMapper).toEntity(reviewRequestDTO, user, movie);
+        verify(reviewRepository).save(review);
+        verify(reviewMapper).toResponseDTO(review);
     }
 
     @Test
@@ -125,11 +146,12 @@ class ReviewServiceTest {
         when(reviewRepository.existsByUserIdAndMovieId(1L, 1L)).thenReturn(true);
 
         // When & Then
-        assertThatThrownBy(() -> reviewService.createReview(1L, 1L, "Muy buena"))
+        assertThatThrownBy(() -> reviewService.createReview(1L, 1L, reviewRequestDTO))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("already submitted a review");
 
         verify(reviewRepository, never()).save(any());
+        verify(reviewMapper, never()).toEntity(any(), any(), any());
     }
 
     @Test
@@ -139,7 +161,7 @@ class ReviewServiceTest {
         when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
         // When & Then
-        assertThatThrownBy(() -> reviewService.createReview(99L, 1L, "Comentario"))
+        assertThatThrownBy(() -> reviewService.createReview(99L, 1L, reviewRequestDTO))
                 .isInstanceOf(UserNotFoundException.class);
 
         verify(reviewRepository, never()).save(any());
@@ -153,41 +175,49 @@ class ReviewServiceTest {
         when(movieRepository.findById(99L)).thenReturn(Optional.empty());
 
         // When & Then
-        assertThatThrownBy(() -> reviewService.createReview(1L, 99L, "Comentario"))
+        assertThatThrownBy(() -> reviewService.createReview(1L, 99L, reviewRequestDTO))
                 .isInstanceOf(MovieNotFoundException.class);
 
         verify(reviewRepository, never()).save(any());
     }
 
+    // ========== FIND ALL REVIEWS ==========
+
     @Test
-    @DisplayName("Debería devolver todas las reviews")
-    void findAllReviews_ShouldReturnListOfReviews() {
+    @DisplayName("Debería devolver todas las reviews como DTOs")
+    void findAllReviews_ShouldReturnListOfReviewResponseDTO() {
         // Given
         List<Review> reviews = List.of(review);
         when(reviewRepository.findAll()).thenReturn(reviews);
+        when(reviewMapper.toResponseDTO(review)).thenReturn(reviewResponseDTO);
 
         // When
-        List<Review> result = reviewService.findAllReviews();
+        List<ReviewResponseDTO> result = reviewService.findAllReviews();
 
         // Then
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getComment()).isEqualTo("Muy buena");
         verify(reviewRepository).findAll();
+        verify(reviewMapper, times(1)).toResponseDTO(review);
     }
 
+    // ========== FIND BY ID ==========
+
     @Test
-    @DisplayName("Debería devolver una review por ID cuando existe")
-    void findReviewById_WhenExists_ShouldReturnReview() {
+    @DisplayName("Debería devolver una review como DTO por ID cuando existe")
+    void findReviewById_WhenExists_ShouldReturnReviewResponseDTO() {
         // Given
         when(reviewRepository.findById(1L)).thenReturn(Optional.of(review));
+        when(reviewMapper.toResponseDTO(review)).thenReturn(reviewResponseDTO);
 
         // When
-        Review result = reviewService.findReviewById(1L);
+        ReviewResponseDTO result = reviewService.findReviewById(1L);
 
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getComment()).isEqualTo("Muy buena");
         verify(reviewRepository).findById(1L);
+        verify(reviewMapper).toResponseDTO(review);
     }
 
     @Test
@@ -201,17 +231,21 @@ class ReviewServiceTest {
                 .isInstanceOf(ReviewNotFoundException.class);
 
         verify(reviewRepository).findById(99L);
+        verify(reviewMapper, never()).toResponseDTO(any());
     }
 
+    // ========== FIND BY MOVIE ID (PAGINADO) ==========
+
     @Test
-    @DisplayName("Debería devolver reviews por ID de película paginadas")
-    void findReviewsByMovieId_ShouldReturnPageOfReviews() {
+    @DisplayName("Debería devolver reviews por ID de película paginadas como DTOs")
+    void findReviewsByMovieId_ShouldReturnPageOfReviewResponseDTO() {
         // Given
         when(reviewRepository.findReviewsByMovieId(eq(1L), any(Pageable.class)))
                 .thenReturn(reviewPage);
+        when(reviewMapper.toResponseDTO(review)).thenReturn(reviewResponseDTO);
 
         // When
-        Page<Review> result = reviewService.findReviewsByMovieId(1L, pageable);
+        Page<ReviewResponseDTO> result = reviewService.findReviewsByMovieId(1L, pageable);
 
         // Then
         assertThat(result).isNotNull();
@@ -220,6 +254,7 @@ class ReviewServiceTest {
         assertThat(result.getTotalElements()).isEqualTo(1);
 
         verify(reviewRepository).findReviewsByMovieId(1L, pageable);
+        verify(reviewMapper, times(1)).toResponseDTO(review);
     }
 
     @Test
@@ -231,23 +266,27 @@ class ReviewServiceTest {
                 .thenReturn(emptyPage);
 
         // When
-        Page<Review> result = reviewService.findReviewsByMovieId(1L, pageable);
+        Page<ReviewResponseDTO> result = reviewService.findReviewsByMovieId(1L, pageable);
 
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getContent()).isEmpty();
         assertThat(result.getTotalElements()).isZero();
+        verify(reviewMapper, never()).toResponseDTO(any());
     }
 
+    // ========== FIND BY USER ID (PAGINADO) ==========
+
     @Test
-    @DisplayName("Debería devolver reviews por ID de usuario paginadas")
-    void findReviewsByUserId_ShouldReturnPageOfReviews() {
+    @DisplayName("Debería devolver reviews por ID de usuario paginadas como DTOs")
+    void findReviewsByUserId_ShouldReturnPageOfReviewResponseDTO() {
         // Given
         when(reviewRepository.findReviewsByUserId(eq(1L), any(Pageable.class)))
                 .thenReturn(reviewPage);
+        when(reviewMapper.toResponseDTO(review)).thenReturn(reviewResponseDTO);
 
         // When
-        Page<Review> result = reviewService.findReviewsByUserId(1L, pageable);
+        Page<ReviewResponseDTO> result = reviewService.findReviewsByUserId(1L, pageable);
 
         // Then
         assertThat(result).isNotNull();
@@ -255,57 +294,80 @@ class ReviewServiceTest {
         assertThat(result.getContent().get(0).getComment()).isEqualTo("Muy buena");
 
         verify(reviewRepository).findReviewsByUserId(1L, pageable);
+        verify(reviewMapper, times(1)).toResponseDTO(review);
     }
 
+    // ========== UPDATE REVIEW ==========
+
     @Test
-    @DisplayName("Debería actualizar el comentario de una review si pertenece al usuario")
-    void updateReview_WhenOwnedByUser_ShouldUpdateComment() {
+    @DisplayName("Debería actualizar el comentario de una review si pertenece al usuario y devolver DTO")
+    void updateReview_WhenOwnedByUser_ShouldUpdateAndReturnDTO() {
         // Given
         String newComment = "Comentario actualizado";
+        ReviewRequestDTO updateDTO = new ReviewRequestDTO();
+        updateDTO.setComment(newComment);
+
+        Review updatedReview = Review.builder()
+                .id(1L)
+                .user(user)
+                .movie(movie)
+                .comment(newComment)
+                .createdAt(review.getCreatedAt())
+                .build();
+
+        ReviewResponseDTO updatedResponseDTO = new ReviewResponseDTO(
+                1L, newComment, review.getCreatedAt(), "Esteban", "Peli épica"
+        );
 
         when(reviewRepository.findById(1L)).thenReturn(Optional.of(review));
-        when(reviewRepository.save(any(Review.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(reviewRepository.save(any(Review.class))).thenReturn(updatedReview);
+        when(reviewMapper.toResponseDTO(updatedReview)).thenReturn(updatedResponseDTO);
 
         // When
-        Review result = reviewService.updateReview(1L, 1L, newComment);
+        ReviewResponseDTO result = reviewService.updateReview(1L, 1L, updateDTO);
 
         // Then
         assertThat(result.getComment()).isEqualTo(newComment);
         assertThat(result.getId()).isEqualTo(1L);
-        assertThat(result.getUser().getId()).isEqualTo(1L);
 
-        verify(reviewRepository).save(argThat(updatedReview ->
-                updatedReview.getComment().equals(newComment)
+        verify(reviewRepository).save(argThat(savedReview ->
+                savedReview.getComment().equals(newComment)
         ));
+        verify(reviewMapper).toResponseDTO(updatedReview);
     }
 
     @Test
     @DisplayName("Debería lanzar excepción al actualizar review que no pertenece al usuario")
     void updateReview_WhenNotOwnedByUser_ShouldThrowException() {
         // Given
-        String newComment = "Comentario actualizado";
-
+        ReviewRequestDTO updateDTO = new ReviewRequestDTO();
+        updateDTO.setComment("Nuevo comentario");
         when(reviewRepository.findById(1L)).thenReturn(Optional.of(review));
 
         // When & Then
-        assertThatThrownBy(() -> reviewService.updateReview(1L, 2L, newComment))
+        assertThatThrownBy(() -> reviewService.updateReview(1L, 2L, updateDTO))
                 .isInstanceOf(ReviewNotFoundException.class);
 
         verify(reviewRepository, never()).save(any());
+        verify(reviewMapper, never()).toResponseDTO(any());
     }
 
     @Test
     @DisplayName("Debería lanzar excepción al actualizar review que no existe")
     void updateReview_WhenNotFound_ShouldThrowException() {
         // Given
+        ReviewRequestDTO updateDTO = new ReviewRequestDTO();
+        updateDTO.setComment("nuevo");
         when(reviewRepository.findById(99L)).thenReturn(Optional.empty());
 
         // When & Then
-        assertThatThrownBy(() -> reviewService.updateReview(99L, 1L, "nuevo"))
+        assertThatThrownBy(() -> reviewService.updateReview(99L, 1L, updateDTO))
                 .isInstanceOf(ReviewNotFoundException.class);
 
         verify(reviewRepository, never()).save(any());
     }
+
+    // ========== DELETE REVIEW ==========
 
     @Test
     @DisplayName("Debería eliminar una review si pertenece al usuario")
@@ -354,6 +416,8 @@ class ReviewServiceTest {
         verify(reviewRepository, never()).deleteById(any());
     }
 
+    // ========== PAGINACIÓN Y ORDEN ==========
+
     @Test
     @DisplayName("Debería manejar correctamente la paginación en búsquedas")
     void shouldHandlePaginationCorrectly() {
@@ -364,12 +428,15 @@ class ReviewServiceTest {
                 Review.builder().id(3L).user(user).movie(movie).comment("Tercera").build()
         );
         Page<Review> pageWithThree = new PageImpl<>(manyReviews, pageable, 3);
-
         when(reviewRepository.findReviewsByMovieId(eq(1L), any(Pageable.class)))
                 .thenReturn(pageWithThree);
+        when(reviewMapper.toResponseDTO(any(Review.class)))
+                .thenReturn(reviewResponseDTO)
+                .thenReturn(new ReviewResponseDTO(2L, "Segunda", LocalDateTime.now(), "Esteban", "Peli épica"))
+                .thenReturn(new ReviewResponseDTO(3L, "Tercera", LocalDateTime.now(), "Esteban", "Peli épica"));
 
         // When
-        Page<Review> result = reviewService.findReviewsByMovieId(1L, pageable);
+        Page<ReviewResponseDTO> result = reviewService.findReviewsByMovieId(1L, pageable);
 
         // Then
         assertThat(result.getContent()).hasSize(3);
@@ -383,15 +450,16 @@ class ReviewServiceTest {
         // Given
         Pageable sortedByDateDesc = PageRequest.of(0, 10,
                 org.springframework.data.domain.Sort.by("createdAt").descending());
-
         when(reviewRepository.findReviewsByMovieId(eq(1L), any(Pageable.class)))
                 .thenReturn(reviewPage);
+        when(reviewMapper.toResponseDTO(review)).thenReturn(reviewResponseDTO);
 
         // When
-        Page<Review> result = reviewService.findReviewsByMovieId(1L, sortedByDateDesc);
+        Page<ReviewResponseDTO> result = reviewService.findReviewsByMovieId(1L, sortedByDateDesc);
 
         // Then
         assertThat(result).isNotNull();
         verify(reviewRepository).findReviewsByMovieId(1L, sortedByDateDesc);
+        verify(reviewMapper, times(1)).toResponseDTO(review);
     }
 }
