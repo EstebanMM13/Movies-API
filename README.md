@@ -115,6 +115,12 @@ Run tests with: mvn test
 
 ---
 
+## 📚 Interactive Documentation
+
+You can explore the automatically generated documentation with [DeepWiki](https://deepwiki.com/EstebanMM13/Movies-API).
+
+---
+
 ## 👨‍💻 Author
 
 Esteban Martínez  
