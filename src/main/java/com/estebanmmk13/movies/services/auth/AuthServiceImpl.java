@@ -10,12 +10,14 @@ import com.estebanmmk13.movies.error.ResourceNotFoundException;
 import com.estebanmmk13.movies.models.*;
 import com.estebanmmk13.movies.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
@@ -26,18 +28,18 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponse register(RegisterRequest registerRequest) {
+        log.info("Registrando nuevo usuario con email: {} y usarname: {}",
+                registerRequest.getEmail(), registerRequest.getUsername());
         // 1. Verificar si el email ya existe (para evitar el error 403)
         if (userRepository.existsByEmail(registerRequest.getEmail())) {
-            throw new DuplicateResourceException(  // ← Tu excepción personalizada
-                    "User", "email", registerRequest.getEmail()
-            );
+            log.warn("Intento de registro con email ya existente: {}", registerRequest.getEmail());
+            throw new DuplicateResourceException("User", "email", registerRequest.getEmail());
         }
 
         // 2. Verificar si el username ya existe (opcional)
         if (userRepository.existsByUsername(registerRequest.getUsername())) {
-            throw new DuplicateResourceException(
-                    "User", "username", registerRequest.getUsername()
-            );
+            log.warn("Intento de registro con username ya existente: {}",registerRequest.getUsername());
+            throw new DuplicateResourceException("User", "username", registerRequest.getUsername());
         }
 
         var user = User.builder()
@@ -47,13 +49,15 @@ public class AuthServiceImpl implements AuthService {
                 .role(Role.USER)
                 .build();
 
-        userRepository.save(user);
-        var jwtToken = jwtService.generateToken(user);
+        User savedUser = userRepository.save(user);
+        var jwtToken = jwtService.generateToken(savedUser);
+        log.info("Usuario registrado con id: {}",savedUser.getId());
         return AuthResponse.builder().token(jwtToken).build();
     }
 
     @Override
     public AuthResponse authenticate(AuthenticationRequest authenticationRequest) {
+        log.debug("Autenticando usario: {}",authenticationRequest.getUsername());
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
@@ -61,6 +65,7 @@ public class AuthServiceImpl implements AuthService {
                             authenticationRequest.getPassword()
                     ));
         } catch (BadCredentialsException e) {
+            log.warn("Credenciales invalidas para usuario: {}",authenticationRequest.getUsername());
             // 3. Capturar error de credenciales y lanzar excepción personalizada
             throw new InvalidCredentialsException("User or password incorrect");
         }
@@ -70,6 +75,7 @@ public class AuthServiceImpl implements AuthService {
                         "User", "username", authenticationRequest.getUsername()
                 ));
 
+        log.info("Usuario autenticado con exito: {}",user.getUsername());
         var jwtToken = jwtService.generateToken(user);
         return AuthResponse.builder().token(jwtToken).build();
     }

@@ -18,11 +18,13 @@ import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 @Transactional
 public class MovieServiceImpl implements MovieService {
@@ -48,12 +50,14 @@ public class MovieServiceImpl implements MovieService {
 
     @Override
     public Page<MovieResponseDTO> findAllMovies(Pageable pageable) {
+        log.info("Petición para listar todas las películas");
         return movieRepository.findAll(pageable)
                 .map(movieMapper::toResponseDTO);
     }
 
     @Override
     public MovieResponseDTO findMovieById(Long id) {
+        log.debug("Finding movie by id: {}", id);
         Movie movie = movieRepository.findById(id)
                 .orElseThrow(() -> new MovieNotFoundException("Movie not found with id: " + id));
         return movieMapper.toResponseDTO(movie);
@@ -61,6 +65,7 @@ public class MovieServiceImpl implements MovieService {
 
     @Override
     public MovieResponseDTO createMovie(MovieRequestDTO dto) {
+        log.info("Creating new movie with title: {}", dto.getTitle());
         Movie movie = movieMapper.toEntity(dto);
         // Asignar géneros si vienen IDs
         if (dto.getGenreIds() != null && !dto.getGenreIds().isEmpty()) {
@@ -70,6 +75,7 @@ public class MovieServiceImpl implements MovieService {
             movie.setGenres(new ArrayList<>());
         }
         Movie saved = movieRepository.save(movie);
+        log.info("Movie created with id: {}", saved.getId());
         return movieMapper.toResponseDTO(saved);
     }
 
@@ -89,9 +95,11 @@ public class MovieServiceImpl implements MovieService {
 
     @Override
     public void deleteMovie(Long id) {
+        log.warn("Attempt to delete non-existent movie with id: {}", id);
         Movie movie = movieRepository.findById(id)
                 .orElseThrow(() -> new MovieNotFoundException("Movie not found with id: " + id));
         movieRepository.delete(movie);
+        log.info("Movie deleted with id: {}", id);
     }
 
     @Override

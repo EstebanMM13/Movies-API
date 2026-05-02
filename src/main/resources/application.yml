@@ -1,9 +1,10 @@
+# ==================== CONFIGURACIÓN GENERAL ====================
 server:
   port: 8085
 
 spring:
   profiles:
-    active: dev
+    active: dev   # Cambia a 'qa', 'prod' o 'test' según el entorno
 
 springdoc:
   swagger-ui:
@@ -23,13 +24,18 @@ management:
         http.server:
           requests: true
 
-# Configuración JWT (disponible para todos los perfiles)
+# Configuración JWT (común a todos los perfiles)
 jwt:
   secret: ${JWT_SECRET:2da08e8ee264a149413ce46abebbd566b4c8bbb019b37708ed9d77f8511ac7bf}
   expiration: 86400000
 
----
+# Patrón de log global (se puede sobrescribir en perfiles)
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} - %logger{36} - [%X{correlationId}] - %msg%n"
 
+# ==================== PERFIL: dev (desarrollo local) ====================
+---
 spring:
   config:
     activate:
@@ -38,20 +44,29 @@ spring:
     name: movies
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    password: 1234
     url: jdbc:mysql://127.0.0.1:3306/movies_dev
     username: root
+    password: 1234
   jpa:
     database: MYSQL
     hibernate:
       ddl-auto: update
+    show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
-    show-sql: true
 
+logging:
+  level:
+    root: WARN
+    com.estebanmmk13.movies: DEBUG
+    org.hibernate: ERROR
+    org.springframework: ERROR
+    org.springframework.web: INFO
+# NOTA: El patrón de log ya se hereda del bloque global, no hace falta repetirlo.
+
+# ==================== PERFIL: qa (entorno de pruebas) ====================
 ---
-
 spring:
   config:
     activate:
@@ -60,20 +75,27 @@ spring:
     name: movies
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    password: 1234
     url: jdbc:mysql://127.0.0.1:3306/movies_qa
     username: root
+    password: 1234
   jpa:
     database: MYSQL
     hibernate:
       ddl-auto: update
+    show-sql: true
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
-    show-sql: true
 
+logging:
+  level:
+    root: WARN
+    com.estebanmmk13.movies: INFO
+    org.hibernate: WARN
+    org.springframework: WARN
+
+# ==================== PERFIL: prod (producción) ====================
 ---
-
 spring:
   config:
     activate:
@@ -82,20 +104,27 @@ spring:
     name: movies
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    password: 1234
     url: jdbc:mysql://127.0.0.1:3306/movies_prod
     username: root
+    password: ${DB_PASSWORD:1234}
   jpa:
     database: MYSQL
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
+    show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
-    show-sql: true
 
+logging:
+  level:
+    root: ERROR
+    com.estebanmmk13.movies: WARN
+    org.hibernate: ERROR
+    org.springframework: ERROR
+
+# ==================== PERFIL: test (pruebas automáticas) ====================
 ---
-
 spring:
   config:
     activate:
@@ -108,6 +137,13 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop
+    show-sql: true
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
+
+logging:
+  level:
+    root: INFO
+    com.estebanmmk13.movies: DEBUG
+    org.hibernate: INFO

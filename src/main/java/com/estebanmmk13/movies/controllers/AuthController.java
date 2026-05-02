@@ -10,10 +10,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/auth")
 @CrossOrigin
@@ -40,8 +42,9 @@ public class AuthController {
     public ResponseEntity<AuthResponse> register(
             @Parameter(description = "User registration data", required = true)
             @Valid @RequestBody RegisterRequest registerRequest) {
-
+        log.info("Solicitud de registro para usuario: {}", registerRequest.getUsername());
         AuthResponse response = authService.register(registerRequest);
+        log.info("Usario registrado exitosamente: {}", registerRequest.getUsername());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -58,8 +61,9 @@ public class AuthController {
     public ResponseEntity<AuthResponse> authenticate(
             @Parameter(description = "User credentials", required = true)
             @Valid @RequestBody AuthenticationRequest authenticationRequest) {
-
+        log.debug("Intento de login para usuario: {}",authenticationRequest.getUsername());
         AuthResponse response = authService.authenticate(authenticationRequest);
+        log.debug("Usuario auntenticado: {}",authenticationRequest.getUsername());
         return ResponseEntity.ok(response);
     }
 }
