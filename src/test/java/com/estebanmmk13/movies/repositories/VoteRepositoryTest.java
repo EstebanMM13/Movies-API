@@ -309,10 +309,9 @@ class VoteRepositoryTest {
                 });
 
         // Verificar que el mensaje contiene información sobre la violación de unicidad
-        // 🔹 CORREGIDO: Usamos los textos que aparecen en el mensaje real de H2
         assertThat(exception.getMessage())
-                .contains("Violación de indice de Unicidad")
-                .contains("UK_USER_MOVIE_VOTE"); // El nombre de la constraint en mayúsculas
+                .contains("Unique index or primary key violation")  // ✅ Cambiar a inglés
+                .contains("UK_USER_MOVIE_VOTE");
     }
 
     @Test
