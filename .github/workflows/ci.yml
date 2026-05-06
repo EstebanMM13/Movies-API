@@ -22,7 +22,7 @@ jobs:
           cache: maven
 
       - name: Compilar y ejecutar tests
-        run: mvn clean verify
+        run: mvn clean verify -Dspring.profiles.active=test
 
       - name: (Opcional) Subir reporte de tests si fallan
         if: failure()
