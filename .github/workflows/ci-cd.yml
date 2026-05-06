@@ -9,6 +9,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -21,7 +22,9 @@ jobs:
           cache: maven
 
       - name: Run tests
-        run: mvn clean verify -Dspring.profiles.active=test
+        env:
+          SPRING_PROFILES_ACTIVE: test
+        run: mvn clean verify
 
       - name: Upload test reports (if fails)
         if: failure()
@@ -34,6 +37,7 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
