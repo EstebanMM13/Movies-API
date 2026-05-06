@@ -76,6 +76,7 @@ public class MovieController {
         return ResponseEntity.noContent().build();
     }
 
+
     @Operation(summary = "Find movies by title")
     @GetMapping("/title")
     public ResponseEntity<Page<MovieResponseDTO>> findMovieByTitle(@RequestParam String title,
