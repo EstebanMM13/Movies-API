@@ -31,7 +31,7 @@ logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} - %logger{36} - [%X{correlationId}] - %msg%n"
 
-# ==================== PERFIL: dev ====================
+# ==================== PERFIL: DEV ====================
 ---
 spring:
   config:
@@ -43,9 +43,9 @@ spring:
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://mysql:3306/movies_dev
-    username: root
-    password: 1234
+    url: ${DB_URL:jdbc:mysql://localhost:3306/movies_dev}
+    username: ${DB_USER:root}
+    password: ${DB_PASS:1234}
 
   jpa:
     database: MYSQL
@@ -64,7 +64,7 @@ logging:
     org.springframework: ERROR
     org.springframework.web: INFO
 
-# ==================== PERFIL: qa ====================
+# ==================== PERFIL: QA ====================
 ---
 spring:
   config:
@@ -96,7 +96,7 @@ logging:
     org.hibernate: WARN
     org.springframework: WARN
 
-# ==================== PERFIL: prod ====================
+# ==================== PERFIL: PROD ====================
 ---
 spring:
   config:
@@ -128,7 +128,7 @@ logging:
     org.hibernate: ERROR
     org.springframework: ERROR
 
-# ==================== PERFIL: test ====================
+# ==================== PERFIL: TEST ====================
 ---
 spring:
   config:
@@ -144,7 +144,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect

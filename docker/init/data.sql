@@ -28,12 +28,6 @@ INSERT IGNORE INTO movie_genres (movie_id, genre_id) VALUES
 (4, 1), (4, 4),  -- Dark Knight: Acción, Drama
 (5, 4), (5, 3);  -- Pulp Fiction: Drama, Comedia
 
--- Insertar usuario de prueba (password = "123456" encriptado con BCrypt)
--- La contraseña encriptada es: $2a$10$NkM5JkqZkM5JkqZkM5JkquU8JkqZkM5JkqZkM5JkqZkM5JkqZkM5Jkq
-INSERT IGNORE INTO users (id, username, email, password, role) VALUES
-(1, 'admin', 'admin@movies.com', '$2a$10$NkM5JkqZkM5JkqZkM5JkquU8JkqZkM5JkqZkM5JkqZkM5JkqZkM5Jkq', 1),
-(2, 'user', 'user@movies.com', '$2a$10$NkM5JkqZkM5JkqZkM5JkquU8JkqZkM5JkqZkM5JkqZkM5JkqZkM5Jkq', 0);
-
 -- Reiniciar las secuencias de AUTO_INCREMENT (para MySQL)
 ALTER TABLE genres AUTO_INCREMENT = 9;
 ALTER TABLE movies AUTO_INCREMENT = 6;
