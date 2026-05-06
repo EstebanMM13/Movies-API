@@ -29,24 +29,31 @@ jwt:
   secret: ${JWT_SECRET:2da08e8ee264a149413ce46abebbd566b4c8bbb019b37708ed9d77f8511ac7bf}
   expiration: 86400000
 
-# Patrón de log global (se puede sobrescribir en perfiles)
+# Patrón de log global
 logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} - %logger{36} - [%X{correlationId}] - %msg%n"
 
-# ==================== PERFIL: dev (desarrollo local) ====================
+# ==================== PERFIL: dev ====================
 ---
 spring:
   config:
     activate:
       on-profile: dev
+
   application:
     name: movies
+
+  sql:
+    init:
+      mode: always
+
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:3306/movies_dev
+    url: jdbc:mysql://mysql:3306/movies_dev
     username: root
     password: 1234
+
   jpa:
     database: MYSQL
     hibernate:
@@ -55,6 +62,7 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
+    defer-datasource-initialization: true
 
 logging:
   level:
@@ -63,21 +71,23 @@ logging:
     org.hibernate: ERROR
     org.springframework: ERROR
     org.springframework.web: INFO
-# NOTA: El patrón de log ya se hereda del bloque global, no hace falta repetirlo.
 
-# ==================== PERFIL: qa (entorno de pruebas) ====================
+# ==================== PERFIL: qa ====================
 ---
 spring:
   config:
     activate:
       on-profile: qa
+
   application:
     name: movies
+
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://127.0.0.1:3306/movies_qa
     username: root
     password: 1234
+
   jpa:
     database: MYSQL
     hibernate:
@@ -94,19 +104,22 @@ logging:
     org.hibernate: WARN
     org.springframework: WARN
 
-# ==================== PERFIL: prod (producción) ====================
+# ==================== PERFIL: prod ====================
 ---
 spring:
   config:
     activate:
       on-profile: prod
+
   application:
     name: movies
+
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://127.0.0.1:3306/movies_prod
     username: root
     password: ${DB_PASSWORD:1234}
+
   jpa:
     database: MYSQL
     hibernate:
@@ -123,17 +136,19 @@ logging:
     org.hibernate: ERROR
     org.springframework: ERROR
 
-# ==================== PERFIL: test (pruebas automáticas) ====================
+# ==================== PERFIL: test ====================
 ---
 spring:
   config:
     activate:
       on-profile: test
+
   datasource:
     url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=MySQL
     driver-class-name: org.h2.Driver
     username: sa
     password:
+
   jpa:
     hibernate:
       ddl-auto: create-drop
