@@ -29,8 +29,9 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/movies_dev?useSSL=false&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: 1234
-      SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT: 60000   # 60 segundos
+      SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT: 60000
       JWT_SECRET: 2da08e8ee264a149413ce46abebbd566b4c8bbb019b37708ed9d77f8511ac7bf
+      SWAGGER_URL: http://192.168.1.55:8085
     ports:
       - "8085:8085"
 
