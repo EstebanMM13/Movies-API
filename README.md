@@ -19,6 +19,10 @@ This project follows clean architecture principles and implements authentication
 - ❌ Global exception handling (`@ControllerAdvice`)
 - ✅ DTO layer with validation
 - 🧪 Unit & integration tests (Mockito + H2)
+- 📊 Structured logging with correlation ID
+- 🐳 Docker containerization
+- ⚙️ CI/CD with GitHub Actions
+- ☁️ Docker Hub integration
 
 ---
 
@@ -33,7 +37,10 @@ This project follows clean architecture principles and implements authentication
 - Swagger / OpenAPI 3
 - Maven
 - JUnit & Mockito
-
+- Docker & Docker Compose
+- GitHub Actions (CI/CD)
+- SLF4J & Logback (structured logging)
+  
 ---
 
 ## 📘 API Documentation
@@ -46,6 +53,8 @@ Controllers are grouped by domain:
 - Movies
 - Genres
 - Reviews
+
+> **Note:** If you are running Docker in a virtual machine or remote server, replace `localhost` with the VM's IP address (e.g., `http://192.168.1.100:8085/swagger-ui/index.html`).
 
 ---
 
@@ -72,6 +81,81 @@ POST /auth/authenticate
 Returns a JWT token that must be included in protected endpoints: 
 
 Authorization: Bearer YOUR_TOKEN
+
+---
+## 🐳 Run with Docker (recommended)
+The easiest way to run the entire stack (API + MySQL).
+
+Prerequisites:
+
+Docker and Docker Compose installed
+
+Steps:
+
+Clone the repository:
+git clone https://github.com/EstebanMM13/Movies-API.git
+cd Movies-API
+
+Start the containers:
+docker compose up -d
+
+Wait 30 seconds for MySQL to start, then access:
+http://localhost:8085/swagger-ui/index.html
+
+To view logs:
+docker compose logs -f
+
+To stop the containers:
+docker compose down
+
+Preloaded test data:
+
+The database comes preloaded with:
+
+Genres: Action, Adventure, Comedy, Drama, Sci-Fi, Terror, Romance, Animation
+
+Movies: Inception, The Matrix, Interstellar, The Dark Knight, Pulp Fiction
+
+Test users: user / 123456 (ROLE_USER), admin / 123456 (ROLE_ADMIN)
+
+Environment variables (optional):
+
+You can customize the Swagger URL in docker-compose.yml:
+SWAGGER_URL: http://localhost:8085 (Change to your IP/domain)
+
+---
+## ▶ Run locally without Docker
+Install MySQL locally and create a database named movies_dev.
+
+Configure application-dev.yml with your MySQL credentials (username, password).
+
+Run the application using Maven:
+mvn spring-boot:run
+
+Access: http://localhost:8085/swagger-ui/index.html
+
+To run tests:
+mvn test
+
+---
+## ⚙️ CI/CD Pipeline
+This project uses GitHub Actions for Continuous Integration and Continuous Delivery.
+
+What happens on every push to master?
+
+CI: Compiles the code and runs all unit/integration tests (using H2 in-memory database).
+CD: If tests pass, builds a Docker image and pushes it to Docker Hub (estebanmm13/movies-api:latest).
+
+Pipeline configuration:
+
+Workflow file: .github/workflows/ci-cd.yml
+
+Secrets required: DOCKER_USERNAME, DOCKER_PASSWORD
+
+Runs on: ubuntu-latest
+
+Status badge (optional):
+https://github.com/EstebanMM13/Movies-API/actions/workflows/ci-cd.yml/badge.svg
 
 ---
 
@@ -108,9 +192,7 @@ Run tests with: mvn test
 ## 🔮 Future Improvements
 
 - Role-based authorization (ADMIN / USER)
-- Docker containerization
 - Refresh tokens
-- CI/CD integration
 - Advanced filtering (Specifications / Criteria API)
 
 ---
