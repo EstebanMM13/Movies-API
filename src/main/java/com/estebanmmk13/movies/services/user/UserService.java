@@ -31,4 +31,6 @@ public interface UserService {
 
     User findUserEntityByUsername(String username);
 
+    User getCurrentUser();
+
 }

@@ -141,6 +141,7 @@ class GenreControllerTest {
 
     @Test
     @DisplayName("POST /api/genres - Should create genre and return 201")
+    @WithMockUser(roles = "ADMIN")
     void createGenre_ShouldReturnCreated() throws Exception {
         when(genreService.createGenre(any(Genre.class))).thenReturn(genre);
 
@@ -173,6 +174,7 @@ class GenreControllerTest {
 
     @Test
     @DisplayName("PATCH /api/genres/{id} - Should update genre and return 200")
+    @WithMockUser(roles = "ADMIN")
     void updateGenre_ShouldReturnUpdatedGenre() throws Exception {
         Genre updatedGenre = Genre.builder()
                 .id(1L)
@@ -197,6 +199,7 @@ class GenreControllerTest {
 
     @Test
     @DisplayName("PATCH /api/genres/{id} - Should return 404 when genre not found")
+    @WithMockUser(roles = "ADMIN")
     void updateGenre_WhenNotExists_ShouldReturn404() throws Exception {
         when(genreService.updateGenre(eq(99L), any(Genre.class)))
                 .thenThrow(new GenreNotFoundException("Genre not found with id: 99"));
@@ -214,6 +217,7 @@ class GenreControllerTest {
 
     @Test
     @DisplayName("DELETE /api/genres/{id} - Should delete and return 204")
+    @WithMockUser(roles = "ADMIN")
     void deleteGenre_ShouldReturnNoContent() throws Exception {
         doNothing().when(genreService).deleteGenre(1L);
 
@@ -224,6 +228,7 @@ class GenreControllerTest {
 
     @Test
     @DisplayName("DELETE /api/genres/{id} - Should return 404 when genre not found")
+    @WithMockUser(roles = "ADMIN")
     void deleteGenre_WhenNotExists_ShouldReturn404() throws Exception {
         doThrow(new GenreNotFoundException("Genre not found with id: 99"))
                 .when(genreService).deleteGenre(99L);

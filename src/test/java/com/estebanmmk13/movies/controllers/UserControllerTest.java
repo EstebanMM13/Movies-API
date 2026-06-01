@@ -3,6 +3,9 @@ package com.estebanmmk13.movies.controllers;
 import com.estebanmmk13.movies.dtoModels.request.UserRequestDTO;
 import com.estebanmmk13.movies.dtoModels.response.UserResponseDTO;
 import com.estebanmmk13.movies.error.notFound.UserNotFoundException;
+import com.estebanmmk13.movies.models.Role;
+import com.estebanmmk13.movies.models.User;
+import com.estebanmmk13.movies.repositories.UserRepository;
 import com.estebanmmk13.movies.services.user.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,6 +25,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -32,7 +36,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@WithMockUser(username = "admin", roles = "ADMIN")
 class UserControllerTest {
 
     @Autowired
@@ -44,10 +47,15 @@ class UserControllerTest {
     @MockitoBean
     private UserService userService;
 
+    @MockitoBean
+    private UserRepository userRepository;  // ← AÑADIR ESTO
+
     private UserResponseDTO userResponseDTO;
     private UserResponseDTO updatedUserResponseDTO;
     private UserRequestDTO userRequestDTO;
     private Page<UserResponseDTO> userPage;
+    private User adminUser;
+    private User normalUser;
 
     @BeforeEach
     void setUp() {
@@ -62,11 +70,28 @@ class UserControllerTest {
 
         Pageable pageable = PageRequest.of(0, 10);
         userPage = new PageImpl<>(List.of(userResponseDTO), pageable, 1);
+
+        adminUser = User.builder()
+                .id(999L)
+                .username("admin")
+                .email("admin@test.com")
+                .password("encodedPassword")
+                .role(Role.ADMIN)
+                .build();
+
+        normalUser = User.builder()
+                .id(1L)
+                .username("EstebanMM13")
+                .email("esteban@gmail.com")
+                .password("encodedPassword")
+                .role(Role.USER)
+                .build();
     }
 
     // ========== GET /api/users ==========
     @Test
     @DisplayName("GET /api/users - Should return paginated list of UserResponseDTO")
+    @WithMockUser(roles = "ADMIN")
     void findAllUsers_ShouldReturnPageOfUserResponseDTO() throws Exception {
         when(userService.findAllUsers(any(Pageable.class))).thenReturn(userPage);
 
@@ -87,6 +112,7 @@ class UserControllerTest {
     // ========== GET /api/users/{id} ==========
     @Test
     @DisplayName("GET /api/users/{id} - Should return UserResponseDTO when exists")
+    @WithMockUser(roles = "USER")
     void findUserById_WhenExists_ShouldReturnUserResponseDTO() throws Exception {
         when(userService.findUserById(1L)).thenReturn(userResponseDTO);
 
@@ -103,6 +129,7 @@ class UserControllerTest {
 
     @Test
     @DisplayName("GET /api/users/{id} - Should return 404 when user not found")
+    @WithMockUser(roles = "USER")
     void findUserById_WhenNotExists_ShouldReturn404() throws Exception {
         when(userService.findUserById(99L))
                 .thenThrow(new UserNotFoundException("User not found with id: 99"));
@@ -116,6 +143,7 @@ class UserControllerTest {
     // ========== POST /api/users ==========
     @Test
     @DisplayName("POST /api/users - Should create user and return 201 with UserResponseDTO")
+    @WithMockUser(roles = "USER")
     void createUser_ShouldReturnCreated() throws Exception {
         when(userService.createUser(any(UserRequestDTO.class))).thenReturn(userResponseDTO);
 
@@ -135,6 +163,7 @@ class UserControllerTest {
 
     @Test
     @DisplayName("POST /api/users - Should return 400 when validation fails")
+    @WithMockUser(roles = "USER")
     void createUser_WithInvalidData_ShouldReturnBadRequest() throws Exception {
         UserRequestDTO invalidDTO = new UserRequestDTO();
         invalidDTO.setUsername("");
@@ -152,8 +181,10 @@ class UserControllerTest {
 
     // ========== PATCH /api/users/{id} ==========
     @Test
-    @DisplayName("PATCH /api/users/{id} - Should update user and return UserResponseDTO")
-    void updateUser_ShouldReturnUpdatedUserResponseDTO() throws Exception {
+    @DisplayName("PATCH /api/users/{id} - Admin can update any user")
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void updateUser_AsAdmin_ShouldReturnUpdatedUserResponseDTO() throws Exception {
+        when(userService.getCurrentUser()).thenReturn(adminUser);
         when(userService.updateUser(eq(1L), any(UserRequestDTO.class)))
                 .thenReturn(updatedUserResponseDTO);
 
@@ -169,7 +200,7 @@ class UserControllerTest {
                         .content(objectMapper.writeValueAsString(updateDTO)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.username").value("EstebanMM13")) // asumimos que se queda igual
+                .andExpect(jsonPath("$.username").value("EstebanMM13"))
                 .andExpect(jsonPath("$.email").value("esteban@gmail.com"))
                 .andExpect(jsonPath("$.password").doesNotExist());
 
@@ -177,8 +208,59 @@ class UserControllerTest {
     }
 
     @Test
+    @DisplayName("PATCH /api/users/{id} - User can update themselves")
+    @WithMockUser(username = "EstebanMM13", roles = "USER")
+    void updateUser_AsSameUser_ShouldReturnUpdatedUserResponseDTO() throws Exception {
+        when(userService.getCurrentUser()).thenReturn(normalUser);
+        when(userService.updateUser(eq(1L), any(UserRequestDTO.class)))
+                .thenReturn(updatedUserResponseDTO);
+
+        UserRequestDTO updateDTO = new UserRequestDTO();
+        updateDTO.setUsername("NuevoUsername");
+        updateDTO.setEmail("nuevo@email.com");
+        updateDTO.setPassword("newpass");
+        updateDTO.setRole("USER");
+
+        mockMvc.perform(patch("/api/users/1")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateDTO)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.username").value("EstebanMM13"))
+                .andExpect(jsonPath("$.email").value("esteban@gmail.com"))
+                .andExpect(jsonPath("$.password").doesNotExist());
+
+        verify(userService).updateUser(eq(1L), any(UserRequestDTO.class));
+    }
+
+    @Test
+    @DisplayName("PATCH /api/users/{id} - User cannot update another user")
+    @WithMockUser(username = "otheruser", roles = "USER")
+    void updateUser_AsDifferentUser_ShouldReturnForbidden() throws Exception {
+        User otherUser = User.builder()
+                .id(2L)
+                .username("otheruser")
+                .email("other@test.com")
+                .role(Role.USER)
+                .build();
+
+        when(userService.getCurrentUser()).thenReturn(otherUser);
+
+        mockMvc.perform(patch("/api/users/1")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(userRequestDTO)))
+                .andExpect(status().isForbidden());
+
+        verify(userService, never()).updateUser(anyLong(), any());
+    }
+
+    @Test
     @DisplayName("PATCH /api/users/{id} - Should return 404 when user not found")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void updateUser_WhenNotExists_ShouldReturn404() throws Exception {
+        when(userService.getCurrentUser()).thenReturn(adminUser);
         when(userService.updateUser(eq(99L), any(UserRequestDTO.class)))
                 .thenThrow(new UserNotFoundException("User not found with id: 99"));
 
@@ -193,8 +275,10 @@ class UserControllerTest {
 
     // ========== DELETE /api/users/{id} ==========
     @Test
-    @DisplayName("DELETE /api/users/{id} - Should delete user and return 204")
-    void deleteUser_ShouldReturnNoContent() throws Exception {
+    @DisplayName("DELETE /api/users/{id} - Admin can delete any user")
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void deleteUser_AsAdmin_ShouldReturnNoContent() throws Exception {
+        when(userService.getCurrentUser()).thenReturn(adminUser);
         doNothing().when(userService).deleteUser(1L);
 
         mockMvc.perform(delete("/api/users/1")
@@ -205,8 +289,44 @@ class UserControllerTest {
     }
 
     @Test
+    @DisplayName("DELETE /api/users/{id} - User can delete themselves")
+    @WithMockUser(username = "EstebanMM13", roles = "USER")
+    void deleteUser_AsSameUser_ShouldReturnNoContent() throws Exception {
+        when(userService.getCurrentUser()).thenReturn(normalUser);
+        doNothing().when(userService).deleteUser(1L);
+
+        mockMvc.perform(delete("/api/users/1")
+                        .with(csrf()))
+                .andExpect(status().isNoContent());
+
+        verify(userService).deleteUser(1L);
+    }
+
+    @Test
+    @DisplayName("DELETE /api/users/{id} - User cannot delete another user")
+    @WithMockUser(username = "otheruser", roles = "USER")
+    void deleteUser_AsDifferentUser_ShouldReturnForbidden() throws Exception {
+        User otherUser = User.builder()
+                .id(2L)
+                .username("otheruser")
+                .email("other@test.com")
+                .role(Role.USER)
+                .build();
+
+        when(userService.getCurrentUser()).thenReturn(otherUser);
+
+        mockMvc.perform(delete("/api/users/1")
+                        .with(csrf()))
+                .andExpect(status().isForbidden());
+
+        verify(userService, never()).deleteUser(anyLong());
+    }
+
+    @Test
     @DisplayName("DELETE /api/users/{id} - Should return 404 when user not found")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void deleteUser_WhenNotExists_ShouldReturn404() throws Exception {
+        when(userService.getCurrentUser()).thenReturn(adminUser);
         doThrow(new UserNotFoundException("User not found with id: 99"))
                 .when(userService).deleteUser(99L);
 
@@ -220,6 +340,7 @@ class UserControllerTest {
     // ========== GET /api/users/username/{username} ==========
     @Test
     @DisplayName("GET /api/users/username/{username} - Should return UserResponseDTO")
+    @WithMockUser(roles = "USER")
     void findUserByUsername_ShouldReturnUserResponseDTO() throws Exception {
         when(userService.findUserByUsernameIgnoreCase("EstebanMM13")).thenReturn(userResponseDTO);
 
@@ -234,6 +355,7 @@ class UserControllerTest {
 
     @Test
     @DisplayName("GET /api/users/username/{username} - Should return 404 when not found")
+    @WithMockUser(roles = "USER")
     void findUserByUsername_WhenNotExists_ShouldReturn404() throws Exception {
         when(userService.findUserByUsernameIgnoreCase("NoExiste"))
                 .thenThrow(new UserNotFoundException("User not found with username: NoExiste"));
@@ -246,6 +368,7 @@ class UserControllerTest {
 
     @Test
     @DisplayName("GET /api/users/username/{username} - Should be case insensitive")
+    @WithMockUser(roles = "USER")
     void findUserByUsername_ShouldBeCaseInsensitive() throws Exception {
         when(userService.findUserByUsernameIgnoreCase("estebanmm13")).thenReturn(userResponseDTO);
 
@@ -257,6 +380,7 @@ class UserControllerTest {
     // ========== GET /api/users/email/{email} ==========
     @Test
     @DisplayName("GET /api/users/email/{email} - Should return UserResponseDTO")
+    @WithMockUser(roles = "USER")
     void findUserByEmail_ShouldReturnUserResponseDTO() throws Exception {
         when(userService.findUserByEmail("esteban@gmail.com")).thenReturn(userResponseDTO);
 
@@ -271,6 +395,7 @@ class UserControllerTest {
 
     @Test
     @DisplayName("GET /api/users/email/{email} - Should return 404 when not found")
+    @WithMockUser(roles = "USER")
     void findUserByEmail_WhenNotExists_ShouldReturn404() throws Exception {
         when(userService.findUserByEmail("noexiste@gmail.com"))
                 .thenThrow(new UserNotFoundException("User not found with email: noexiste@gmail.com"));
@@ -284,6 +409,7 @@ class UserControllerTest {
     // ========== GET /api/users/exists/email/{email} ==========
     @Test
     @DisplayName("GET /api/users/exists/email/{email} - Should return true if exists")
+    @WithMockUser(roles = "USER")
     void existsUserByEmail_WhenExists_ShouldReturnTrue() throws Exception {
         when(userService.existsUserByEmail("esteban@gmail.com")).thenReturn(true);
 
@@ -296,6 +422,7 @@ class UserControllerTest {
 
     @Test
     @DisplayName("GET /api/users/exists/email/{email} - Should return false if not exists")
+    @WithMockUser(roles = "USER")
     void existsUserByEmail_WhenNotExists_ShouldReturnFalse() throws Exception {
         when(userService.existsUserByEmail("noexiste@gmail.com")).thenReturn(false);
 
@@ -309,6 +436,7 @@ class UserControllerTest {
     // ========== PAGINATION ==========
     @Test
     @DisplayName("Should pass pagination parameters correctly")
+    @WithMockUser(roles = "ADMIN")
     void findAllUsers_ShouldHandlePaginationParameters() throws Exception {
         when(userService.findAllUsers(any(Pageable.class))).thenReturn(userPage);
 

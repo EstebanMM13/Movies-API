@@ -133,6 +133,7 @@ class MovieControllerTest {
 
     @Test
     @DisplayName("POST /api/movies - Should create movie from DTO and return 201")
+    @WithMockUser(roles = "ADMIN")
     void createMovie_ShouldReturnCreated() throws Exception {
         when(movieService.createMovie(any(MovieRequestDTO.class))).thenReturn(movieResponseDTO);
 
@@ -176,6 +177,7 @@ class MovieControllerTest {
 
     @Test
     @DisplayName("PUT /api/movies/{id} - Should fully replace movie and return 200")
+    @WithMockUser(roles = "ADMIN")
     void updateMovie_ShouldReturnUpdatedMovieResponseDTO() throws Exception {
         when(movieService.updateMovie(eq(1L), any(MovieRequestDTO.class)))
                 .thenReturn(updatedMovieResponseDTO);
@@ -204,6 +206,7 @@ class MovieControllerTest {
 
     @Test
     @DisplayName("PUT /api/movies/{id} - Should return 404 when movie not found")
+    @WithMockUser(roles = "ADMIN")
     void updateMovie_WhenNotExists_ShouldReturn404() throws Exception {
         when(movieService.updateMovie(eq(99L), any(MovieRequestDTO.class)))
                 .thenThrow(new MovieNotFoundException("Movie not found with id: 99"));
@@ -224,6 +227,7 @@ class MovieControllerTest {
 
     @Test
     @DisplayName("DELETE /api/movies/{id} - Should delete movie and return 204")
+    @WithMockUser(roles = "ADMIN")
     void deleteMovie_ShouldReturnNoContent() throws Exception {
         doNothing().when(movieService).deleteMovie(1L);
 
@@ -236,6 +240,7 @@ class MovieControllerTest {
 
     @Test
     @DisplayName("DELETE /api/movies/{id} - Should return 404 when movie not found")
+    @WithMockUser(roles = "ADMIN")
     void deleteMovie_WhenNotExists_ShouldReturn404() throws Exception {
         doThrow(new MovieNotFoundException("Movie not found with id: 99"))
                 .when(movieService).deleteMovie(99L);

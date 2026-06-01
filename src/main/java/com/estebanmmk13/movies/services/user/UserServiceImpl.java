@@ -10,6 +10,7 @@ import com.estebanmmk13.movies.models.User;
 import com.estebanmmk13.movies.repositories.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import static com.estebanmmk13.movies.error.notFound.UserNotFoundException.*;
@@ -96,6 +97,13 @@ public class UserServiceImpl implements UserService {
     @Override
     public User findUserEntityByUsername(String username) {
         return userRepository.findUserByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado: " + username));
+    }
+
+    @Override
+    public User getCurrentUser() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findUserByUsernameIgnoreCaseContaining(username)
                 .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado: " + username));
     }
 }

@@ -66,14 +66,14 @@ class AuthServiceTest {
         when(userRepository.existsByUsername(request.getUsername())).thenReturn(false);
         when(passwordEncoder.encode(request.getPassword())).thenReturn("encodedPassword");
         when(userRepository.save(any(User.class))).thenReturn(user);
-        when(jwtService.generateToken(any(User.class))).thenReturn(TEST_TOKEN);
+        when(jwtService.generateTokenWithRole(any(User.class), anyString())).thenReturn(TEST_TOKEN);
 
         AuthResponse response = authService.register(request);
 
         assertThat(response).isNotNull();
         assertThat(response.getToken()).isEqualTo(TEST_TOKEN);
         verify(userRepository).save(any(User.class));
-        verify(jwtService).generateToken(any(User.class));
+        verify(jwtService).generateTokenWithRole(any(User.class), eq("USER"));
     }
 
     @Test
@@ -87,7 +87,7 @@ class AuthServiceTest {
                 .hasMessageContaining("email");
 
         verify(userRepository, never()).save(any());
-        verify(jwtService, never()).generateToken(any());
+        verify(jwtService, never()).generateTokenWithRole(any(), anyString());
     }
 
     @Test
@@ -102,7 +102,7 @@ class AuthServiceTest {
                 .hasMessageContaining("username");
 
         verify(userRepository, never()).save(any());
-        verify(jwtService, never()).generateToken(any());
+        verify(jwtService, never()).generateTokenWithRole(any(), anyString());
     }
 
     // ========== AUTHENTICATE TESTS ==========
@@ -121,14 +121,14 @@ class AuthServiceTest {
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenReturn(null); // no lanza excepción
         when(userRepository.findUserByUsername(request.getUsername())).thenReturn(Optional.of(user));
-        when(jwtService.generateToken(user)).thenReturn(TEST_TOKEN);
+        when(jwtService.generateTokenWithRole(any(User.class), anyString())).thenReturn(TEST_TOKEN);
 
         AuthResponse response = authService.authenticate(request);
 
         assertThat(response).isNotNull();
         assertThat(response.getToken()).isEqualTo(TEST_TOKEN);
         verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
-        verify(jwtService).generateToken(user);
+        verify(jwtService).generateTokenWithRole(user, "USER");
     }
 
     @Test
@@ -143,7 +143,7 @@ class AuthServiceTest {
                 .hasMessageContaining("incorrect");
 
         verify(userRepository, never()).findUserByUsername(any());
-        verify(jwtService, never()).generateToken(any());
+        verify(jwtService, never()).generateTokenWithRole(any(), anyString());
     }
 
     @Test

@@ -96,11 +96,8 @@ public class UserController {
             @PathVariable Long id,
             @Valid @RequestBody UserRequestDTO userRequestDTO) {
 
-        // Obtener usuario actual autenticado
-        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
-        User currentUser = userService.findUserEntityByUsername(currentUsername);
+        User currentUser = userService.getCurrentUser();  // ← Usar el servicio
 
-        // Verificar: es ADMIN o es el mismo usuario
         if (!currentUser.getRole().equals(Role.ADMIN) && !currentUser.getId().equals(id)) {
             throw new AccessDeniedException("No puedes modificar los datos de otro usuario");
         }
@@ -118,11 +115,8 @@ public class UserController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
 
-        // Obtener usuario actual autenticado
-        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
-        User currentUser = userService.findUserEntityByUsername(currentUsername);
+        User currentUser = userService.getCurrentUser();  // ← Usar el servicio
 
-        // Verificar: es ADMIN o es el mismo usuario
         if (!currentUser.getRole().equals(Role.ADMIN) && !currentUser.getId().equals(id)) {
             throw new AccessDeniedException("No puedes eliminar la cuenta de otro usuario");
         }
