@@ -18,6 +18,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.access.AccessDeniedException;
+import com.estebanmmk13.movies.models.Role;
+
 
 @RestController
 @RequestMapping("/api/users")
@@ -38,6 +43,7 @@ public class UserController {
     )
     @ApiResponse(responseCode = "200", description = "Users retrieved successfully")
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<UserResponseDTO>> findAllUsers(
             @Parameter(description = "Pagination information")
             Pageable pageable) {
@@ -87,10 +93,17 @@ public class UserController {
     })
     @PatchMapping("/{id}")
     public ResponseEntity<UserResponseDTO> updateUser(
-            @Parameter(description = "User ID", required = true)
             @PathVariable Long id,
-            @Parameter(description = "User fields to update", required = true)
             @Valid @RequestBody UserRequestDTO userRequestDTO) {
+
+        // Obtener usuario actual autenticado
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userService.findUserEntityByUsername(currentUsername);
+
+        // Verificar: es ADMIN o es el mismo usuario
+        if (!currentUser.getRole().equals(Role.ADMIN) && !currentUser.getId().equals(id)) {
+            throw new AccessDeniedException("No puedes modificar los datos de otro usuario");
+        }
 
         return ResponseEntity.ok(userService.updateUser(id, userRequestDTO));
     }
@@ -103,9 +116,16 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "User not found")
     })
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(
-            @Parameter(description = "User ID", required = true)
-            @PathVariable Long id) {
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+
+        // Obtener usuario actual autenticado
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userService.findUserEntityByUsername(currentUsername);
+
+        // Verificar: es ADMIN o es el mismo usuario
+        if (!currentUser.getRole().equals(Role.ADMIN) && !currentUser.getId().equals(id)) {
+            throw new AccessDeniedException("No puedes eliminar la cuenta de otro usuario");
+        }
 
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();

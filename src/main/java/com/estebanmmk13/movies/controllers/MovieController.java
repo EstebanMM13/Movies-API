@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/movies")
@@ -50,6 +51,7 @@ public class MovieController {
             @ApiResponse(responseCode = "403", description = "Not authorized")
     })
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<MovieResponseDTO> createMovie(@Valid @RequestBody MovieRequestDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(movieService.createMovie(dto));
     }
@@ -59,7 +61,8 @@ public class MovieController {
             @ApiResponse(responseCode = "200", description = "Movie updated successfully"),
             @ApiResponse(responseCode = "404", description = "Movie not found")
     })
-    @PutMapping("/{id}")   // Cambiado de PATCH a PUT
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<MovieResponseDTO> updateMovie(@PathVariable Long id,
                                                         @Valid @RequestBody MovieRequestDTO dto) {
         return ResponseEntity.ok(movieService.updateMovie(id, dto));
@@ -71,6 +74,7 @@ public class MovieController {
             @ApiResponse(responseCode = "404", description = "Movie not found")
     })
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteMovie(@PathVariable Long id) {
         movieService.deleteMovie(id);
         return ResponseEntity.noContent().build();

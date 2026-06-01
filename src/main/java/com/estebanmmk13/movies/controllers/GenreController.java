@@ -16,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -82,6 +83,7 @@ public class GenreController {
             )
     })
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Genre> createGenre(
             @Parameter(description = "Genre object to create", required = true)
             @Valid @RequestBody Genre genre) {
@@ -99,6 +101,7 @@ public class GenreController {
             @ApiResponse(responseCode = "400", description = "Validation error")
     })
     @PatchMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Genre> updateGenre(
             @Parameter(description = "ID of the genre to update", required = true)
             @PathVariable Long id,
@@ -116,6 +119,7 @@ public class GenreController {
             @ApiResponse(responseCode = "404", description = "Genre not found")
     })
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteGenre(
             @Parameter(description = "ID of the genre to delete", required = true)
             @PathVariable Long id) {
@@ -123,7 +127,6 @@ public class GenreController {
         genreService.deleteGenre(id);
         return ResponseEntity.noContent().build();
     }
-
 
     // SEARCH GENRE BY NAME
     @Operation(

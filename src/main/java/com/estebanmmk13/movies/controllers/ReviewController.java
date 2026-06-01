@@ -110,7 +110,6 @@ public class ReviewController {
         return ResponseEntity.ok(reviewService.updateReview(id, userId, dto));
     }
 
-
     // DELETE REVIEW
     @Operation(
             summary = "Delete a review",

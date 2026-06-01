@@ -5,6 +5,7 @@ import com.estebanmmk13.movies.dtoModels.response.UserResponseDTO;
 import com.estebanmmk13.movies.error.notFound.MovieNotFoundException;
 import com.estebanmmk13.movies.error.notFound.UserNotFoundException;
 import com.estebanmmk13.movies.mapper.UserMapper;
+import com.estebanmmk13.movies.models.Role;
 import com.estebanmmk13.movies.models.User;
 import com.estebanmmk13.movies.repositories.UserRepository;
 import org.springframework.data.domain.Page;
@@ -80,5 +81,21 @@ public class UserServiceImpl implements UserService {
     @Override
     public boolean existsUserByEmail(String email) {
         return userRepository.existsByEmail(email);
+    }
+
+    @Override
+    public long countUsers() {
+        return userRepository.count();
+    }
+
+    @Override
+    public long countUsersByRole(Role role) {
+        return userRepository.countByRole(role);
+    }
+
+    @Override
+    public User findUserEntityByUsername(String username) {
+        return userRepository.findUserByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado: " + username));
     }
 }

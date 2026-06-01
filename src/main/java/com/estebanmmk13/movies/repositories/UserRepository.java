@@ -1,5 +1,6 @@
 package com.estebanmmk13.movies.repositories;
 
+import com.estebanmmk13.movies.models.Role;
 import com.estebanmmk13.movies.models.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -16,4 +17,5 @@ public interface UserRepository extends JpaRepository<User,Long> {
     Optional<User> findUserByEmailIgnoreCase(String email); // 🔹 NUEVO
     boolean existsByEmail(String email);
     boolean existsByUsername(String username);
+    long countByRole(Role role);
 }

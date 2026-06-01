@@ -50,7 +50,7 @@ public class AuthServiceImpl implements AuthService {
                 .build();
 
         User savedUser = userRepository.save(user);
-        var jwtToken = jwtService.generateToken(savedUser);
+        var jwtToken = jwtService.generateTokenWithRole(savedUser, savedUser.getRole().name());
         log.info("Usuario registrado con id: {}",savedUser.getId());
         return AuthResponse.builder().token(jwtToken).build();
     }
@@ -76,7 +76,7 @@ public class AuthServiceImpl implements AuthService {
                 ));
 
         log.info("Usuario autenticado con exito: {}",user.getUsername());
-        var jwtToken = jwtService.generateToken(user);
+        var jwtToken = jwtService.generateTokenWithRole(user, user.getRole().name());
         return AuthResponse.builder().token(jwtToken).build();
     }
 }

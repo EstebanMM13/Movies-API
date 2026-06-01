@@ -6,12 +6,15 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -66,5 +69,23 @@ public class JwtService {
 
     private Date getExpiration(String token) {
         return getClaim(token, Claims::getExpiration);
+    }
+
+    public String generateTokenWithRole(UserDetails userDetails, String role) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("role", role);
+        return generateToken(claims, userDetails);
+    }
+
+    public String extractRole(String token) {
+        return getClaim(token, claims -> claims.get("role", String.class));
+    }
+
+    public List<GrantedAuthority> getAuthorities(String token) {
+        String role = extractRole(token);
+        if (role != null) {
+            return List.of(new SimpleGrantedAuthority("ROLE_" + role));
+        }
+        return List.of(); // Lista vacía si no hay rol
     }
 }
