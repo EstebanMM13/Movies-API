@@ -26,9 +26,10 @@ services:
         condition: service_healthy
     environment:
       SPRING_PROFILES_ACTIVE: dev
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/movies_dev?useSSL=false&allowPublicKeyRetrieval=true
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: 1234
+      # ✅ CORREGIDO: nombres de variables que coinciden con application.yml (${DB_URL}, ${DB_USER}, ${DB_PASS})
+      DB_URL: jdbc:mysql://mysql:3306/movies_dev?useSSL=false&allowPublicKeyRetrieval=true
+      DB_USER: root
+      DB_PASS: 1234
       SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT: 60000
       JWT_SECRET: 2da08e8ee264a149413ce46abebbd566b4c8bbb019b37708ed9d77f8511ac7bf
       SWAGGER_URL: http://192.168.1.55:8085

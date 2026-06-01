@@ -1,11 +1,12 @@
 -- ==================== SCHEMA ====================
+
 CREATE TABLE genres (
-    id BIGINT PRIMARY KEY,
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,  -- ✅ CORREGIDO: añadido AUTO_INCREMENT
     name VARCHAR(255) NOT NULL UNIQUE
 );
 
 CREATE TABLE movies (
-    id BIGINT PRIMARY KEY,
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,  -- ✅ CORREGIDO: añadido AUTO_INCREMENT
     title VARCHAR(255) NOT NULL,
     description TEXT,
     movie_year INT,
@@ -15,7 +16,7 @@ CREATE TABLE movies (
 );
 
 CREATE TABLE users (
-    id BIGINT PRIMARY KEY,
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,  -- ✅ CORREGIDO: añadido AUTO_INCREMENT
     username VARCHAR(255) NOT NULL UNIQUE,
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
@@ -57,7 +58,8 @@ INSERT INTO movie_genres (movie_id, genre_id) VALUES
 (5, 4), (5, 3);
 
 -- ==================== USERS ====================
+-- role: 0 = USER, 1 = ADMIN  (EnumType.ORDINAL)
 
 INSERT INTO users (id, username, email, password, role) VALUES
 (1, 'admin', 'admin@movies.com', '$2a$10$u2TpvdAYxjM0xLrOOqFRfeEvu3Vg/NfBIwtYJFayCGyIvtPyGBCVS', 1),
-(2, 'user', 'user@movies.com', '$2a$10$u2TpvdAYxjM0xLrOOqFRfeEvu3Vg/NfBIwtYJFayCGyIvtPyGBCVS', 0);
+(2, 'user',  'user@movies.com',  '$2a$10$u2TpvdAYxjM0xLrOOqFRfeEvu3Vg/NfBIwtYJFayCGyIvtPyGBCVS', 0);
