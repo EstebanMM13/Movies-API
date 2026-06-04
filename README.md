@@ -23,6 +23,7 @@ This project follows clean architecture principles and implements authentication
 - 🐳 Docker containerization
 - ⚙️ CI/CD with GitHub Actions
 - ☁️ Docker Hub integration
+- Role-based authorization (ADMIN / USER)
 
 ---
 
@@ -191,7 +192,6 @@ Run tests with: mvn test
 
 ## 🔮 Future Improvements
 
-- Role-based authorization (ADMIN / USER)
 - Refresh tokens
 - Advanced filtering (Specifications / Criteria API)
 
